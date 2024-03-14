@@ -81,7 +81,7 @@ def main():
     d.set_pixel_scale(2)  # Set number of pixels per geometry unit
     #d.set_render_size(400, 200)  # Alternative to set_pixel_scale
     d.save_svg(os.path.join(_pictures_dir, 'example.svg'))
-    #d.save_png(os.path.join(_pictures_dir, 'example.png'))
+    d.save_png(os.path.join(_pictures_dir, 'example.png'))
 
 
 if __name__ == "__main__":
