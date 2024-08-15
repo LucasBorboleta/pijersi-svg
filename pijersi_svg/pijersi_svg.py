@@ -26,7 +26,9 @@ You should have received a copy of the GNU General Public License along with thi
 _project_home = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 _pictures_dir = os.path.join(_project_home, 'pictures')
 
-def main():
+def draw_example():
+    print()
+    print("draw_example: ...")
 
     d = draw.Drawing(200, 100, origin='center')
     
@@ -80,9 +82,23 @@ def main():
     
     d.set_pixel_scale(2)  # Set number of pixels per geometry unit
     #d.set_render_size(400, 200)  # Alternative to set_pixel_scale
-    d.save_svg(os.path.join(_pictures_dir, 'example.svg'))
-    d.save_png(os.path.join(_pictures_dir, 'example.png'))
 
+    print()
+    print("draw_example: save as SVG ...")
+    d.save_svg(os.path.join(_pictures_dir, 'example.svg'))
+    print("draw_example: save as SVG done")
+
+    print()
+    print("draw_example: save as PNG ...")
+    d.save_png(os.path.join(_pictures_dir, 'example.png'))
+    print("draw_example: save as PNG done")
+
+    print()
+    print("draw_example: done")
+
+
+def main():
+    draw_example()
 
 if __name__ == "__main__":
 
