@@ -132,6 +132,11 @@ class TinyVector:
         else:
             raise NotImplementedError()
 
+    def make_rotation(self, angle):
+        new_x = math.cos(angle)*self.__x - math.sin(angle)*self.__y
+        new_y = math.sin(angle)*self.__x + math.cos(angle)*self.__y
+        return TinyVector((new_x, new_y))
+
     @staticmethod
     def inner(that, other):
         if isinstance(that, TinyVector) and isinstance(other, TinyVector):
@@ -250,7 +255,7 @@ def make_canvas_config():
 
     # color and etc.
     hexagon_opacity = 0.20
-    hexagon_line_color = None
+    hexagon_line_color = 'black'
 
     hexagon_line_width = max(
         1, board_width*(hexagon_line_width_cm/board_width_cm))
@@ -460,9 +465,9 @@ class Hexagon:
         Hexagon('g6', (1, 3), ring=0, label_side=Side.EAST)
 
 
-def draw_pijersi_board(with_all_labels=False, without_labels=False, with_decoration=False):
+def draw_board(with_all_labels=False, without_labels=False, with_decoration=False):
     print()
-    print("draw_pijersi_board: ...")
+    print("draw_board: ...")
 
     if without_labels:
         file_name = 'pijersi_board_without_labels'
@@ -492,7 +497,7 @@ def draw_pijersi_board(with_all_labels=False, without_labels=False, with_decorat
 
     for abstract_hexagon in Hexagon.all:
 
-        vertex_data = list()
+        hexagon_vertex_data =[]
 
         hexagon_scale = 1 - CANVAS_CONFIG.hexagon_padding/CANVAS_CONFIG.hexagon_width
 
@@ -508,10 +513,10 @@ def draw_pijersi_board(with_all_labels=False, without_labels=False, with_decorat
             hexagon_vertex = hexagon_vertex + hexagon_scale*CANVAS_CONFIG.hexagon_side * \
                 math.sin(vertex_angle)*CANVAS_CONFIG.unit_y
 
-            vertex_data.append(hexagon_vertex[0])
-            vertex_data.append(hexagon_vertex[1])
+            hexagon_vertex_data.append(hexagon_vertex[0])
+            hexagon_vertex_data.append(hexagon_vertex[1])
 
-        hexagon = draw.Lines(*vertex_data,
+        hexagon = draw.Lines(*hexagon_vertex_data,
                              fill=None,
                              fill_opacity=CANVAS_CONFIG.hexagon_opacity *
                              (1 if abstract_hexagon.ring % 2 == 0 else 0.5),
@@ -522,31 +527,60 @@ def draw_pijersi_board(with_all_labels=False, without_labels=False, with_decorat
 
         if with_decoration and abstract_hexagon.ring % 2 != 0:
 
-            vertex_data = list()
+            inner_hexagon_vertex_data =[]
+            inner_hexagon_vertices =[]
 
-            hexagon_scale = 0.75
+            inner_hexagon_scale = 0.60
 
             for vertex_index in range(CANVAS_CONFIG.hexagon_vertex_count):
-                vertex_angle = vertex_index*CANVAS_CONFIG.hexagon_side_angle
+                vertex_angle = (vertex_index)*CANVAS_CONFIG.hexagon_side_angle
 
-                hexagon_vertex = abstract_hexagon.center
+                inner_hexagon_vertex = abstract_hexagon.center
 
-                hexagon_vertex = hexagon_vertex + hexagon_scale*CANVAS_CONFIG.hexagon_side * \
+                inner_hexagon_vertex = inner_hexagon_vertex + inner_hexagon_scale*CANVAS_CONFIG.hexagon_side * \
                     math.cos(vertex_angle)*CANVAS_CONFIG.unit_x
 
-                hexagon_vertex = hexagon_vertex + hexagon_scale*CANVAS_CONFIG.hexagon_side * \
+                inner_hexagon_vertex = inner_hexagon_vertex + inner_hexagon_scale*CANVAS_CONFIG.hexagon_side * \
                     math.sin(vertex_angle)*CANVAS_CONFIG.unit_y
 
-                vertex_data.append(hexagon_vertex[0])
-                vertex_data.append(hexagon_vertex[1])
+                inner_hexagon_vertex_data.append(inner_hexagon_vertex[0])
+                inner_hexagon_vertex_data.append(inner_hexagon_vertex[1])
+                
+                inner_hexagon_vertices.append(inner_hexagon_vertex)
 
-            hexagon = draw.Lines(*vertex_data,
+            inner_hexagon = draw.Lines(*inner_hexagon_vertex_data,
                                  fill=None,
                                  fill_opacity=0,
                                  stroke='black',
-                                 stroke_width=CANVAS_CONFIG.hexagon_line_width,
+                                 stroke_width=CANVAS_CONFIG.hexagon_line_width*2,
                                  close='true')
-            board.append(hexagon)
+            board.append(inner_hexagon)
+
+            
+            for (vertex_1, vertex_2) in zip(inner_hexagon_vertices, inner_hexagon_vertices[1:] + [inner_hexagon_vertices[0]]):
+                vector_0 = vertex_2 - vertex_1
+                vector_1 = vector_0.make_rotation(-math.pi/2)
+                vector_2 = vector_1.make_rotation(-math.pi/2)
+                
+                inner_square_vertices = []
+                inner_square_vertices.append(vertex_1)
+                inner_square_vertices.append(inner_square_vertices[0] + vector_0)
+                inner_square_vertices.append(inner_square_vertices[1] + vector_1)
+                inner_square_vertices.append(inner_square_vertices[2] + vector_2)
+                inner_square_vertices.append(inner_square_vertices[0] )
+                
+                inner_square_vertex_data = []
+                for inner_square_vertex in inner_square_vertices:
+                    inner_square_vertex_data.append(inner_square_vertex[0])
+                    inner_square_vertex_data.append(inner_square_vertex[1])
+                    
+                inner_square = draw.Lines(*inner_square_vertex_data,
+                                     fill=None,
+                                     fill_opacity=0,
+                                     stroke='black',
+                                     stroke_width=CANVAS_CONFIG.hexagon_line_width*2,
+                                     close='true')
+                board.append(inner_square)                
 
         if without_labels:
             label_location = None
@@ -575,24 +609,24 @@ def draw_pijersi_board(with_all_labels=False, without_labels=False, with_decorat
                                    fill=CANVAS_CONFIG.label_color))
 
     print()
-    print("draw_pijersi_board: save as SVG ...")
+    print("draw_board: save as SVG ...")
     board.save_svg(os.path.join(_pictures_dir, f"{file_name}.svg"))
-    print("draw_pijersi_board: save as SVG done")
+    print("draw_board: save as SVG done")
 
     print()
-    print("draw_pijersi_board: save as PNG ...")
+    print("draw_board: save as PNG ...")
     board.save_png(os.path.join(_pictures_dir, f"{file_name}.png"))
-    print("draw_pijersi_board: save as PNG done")
+    print("draw_board: save as PNG done")
 
     print()
-    print("draw_pijersi_board: done")
+    print("draw_board: done")
 
 
 def main():
-    draw_pijersi_board(with_all_labels=True)
-    draw_pijersi_board(without_labels=True)
-    draw_pijersi_board(with_all_labels=False)
-    draw_pijersi_board(with_all_labels=False, with_decoration=True)
+    draw_board(with_all_labels=True)
+    draw_board(without_labels=True)
+    draw_board(with_all_labels=False)
+    draw_board(with_all_labels=False, with_decoration=True)
 
 
 CANVAS_CONFIG = make_canvas_config()
