@@ -174,10 +174,13 @@ class CanvasConfig:
 
 
 def make_canvas_config():
+    
+    print()
+    print("make_canvas_config: ...")
 
     # Compute the sizes in cm
 
-    hexagon_width_cm = 2
+    hexagon_width_cm = 3
     hexagon_side_cm = hexagon_width_cm/math.sqrt(3)
     hexagon_height_cm = 2*hexagon_side_cm
     hexagon_line_width_cm = 0.1/4
@@ -199,6 +202,8 @@ def make_canvas_config():
                        (max_vertical_hexagon_count//2)*hexagon_side_cm +
                        (max_vertical_hexagon_count - max_vertical_hexagon_count//2)*hexagon_height_cm +
                        board_bottom_margin_cm)
+    
+    
 
     # Deduce other sizes in pixels
 
@@ -235,8 +240,9 @@ def make_canvas_config():
 
     # color and etc.
     hexagon_opacity = 0.20
-
-    return CanvasConfig(board_width_cm=board_width_cm,
+    
+    # make and return the CanvasConfig
+    canvas_config = CanvasConfig(board_width_cm=board_width_cm,
                         board_height_cm=board_height_cm,
 
                         board_width=board_width,
@@ -264,6 +270,17 @@ def make_canvas_config():
 
                         hexagon_opacity=hexagon_opacity)
 
+    print()
+    print(f"make_canvas_config: board_width_cm = {board_width_cm:.2f} ")
+    print(f"make_canvas_config: board_height_cm = {board_height_cm:.2f}")
+    print()
+    print(f"make_canvas_config: hexagon_width_cm = {hexagon_width_cm:.2f}")
+    print(f"make_canvas_config: hexagon_height_cm = {hexagon_height_cm:.2f}")
+    print(f"make_canvas_config: hexagon_side_cm = {hexagon_side_cm:.2f}")
+
+    print()
+    print("make_canvas_config: done")
+    return canvas_config
 
 class Hexagon:
 
