@@ -10,6 +10,7 @@ import math
 import os
 import sys
 
+from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import TypeVar
@@ -33,6 +34,13 @@ You should have received a copy of the GNU General Public License along with thi
 
 _project_home = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 _pictures_dir = os.path.join(_project_home, 'pictures')
+
+
+class Side(enum.Enum):
+    NORTH = enum.auto()
+    SOUTH = enum.auto()
+    WEST = enum.auto()
+    EAST = enum.auto()
 
 
 class TinyVector:
@@ -171,7 +179,8 @@ class CanvasConfig:
     label_color: str = None
     label_font_family: str = None
     label_font_size: int = None
-    label_shift: TinyVector = None
+    label_vertical_shift: TinyVector = None
+    label_horizontal_shift: TinyVector = None
 
 
 def make_canvas_config():
@@ -233,7 +242,8 @@ def make_canvas_config():
     label_color = 'black'
     label_font_family = 'Helvetica'
     label_font_size = int(hexagon_width*0.20)
-    label_shift = -0.60*hexagon_side*unit_y
+    label_vertical_shift = -0.60*hexagon_side*unit_y
+    label_horizontal_shift = 1.20*hexagon_side*unit_x
 
     # color and etc.
     hexagon_opacity = 0.20
@@ -268,7 +278,8 @@ def make_canvas_config():
                                  unit_v=unit_v,
 
                                  label_color=label_color,
-                                 label_shift=label_shift,
+                                 label_vertical_shift=label_vertical_shift,
+                                 label_horizontal_shift=label_horizontal_shift,
                                  label_font_family=label_font_family,
                                  label_font_size=label_font_size)
 
@@ -287,19 +298,9 @@ def make_canvas_config():
 
 class Hexagon:
 
-    @enum.unique
-    class Direction(enum.IntEnum):
-        PHI_090 = 0
-        PHI_150 = 1
-        PHI_210 = 2
-        PHI_270 = 3
-        PHI_330 = 4
-        PHI_030 = 5
-        assert PHI_090 < PHI_150 < PHI_210 < PHI_270 < PHI_330 < PHI_030
-
     Self = TypeVar("Self", bound="Hexagon")
 
-    __slots__ = ('name', 'position_uv', 'ring',
+    __slots__ = ('name', 'position_uv', 'ring', 'label_side',
                  'index', 'center', 'vertex_data')
 
     __all_sorted_hexagons = []
@@ -310,7 +311,7 @@ class Hexagon:
 
     all = None  # shortcut to Hexagon.get_all()
 
-    def __init__(self, name: str, position_uv: Tuple[int, int], ring: int):
+    def __init__(self, name: str, position_uv: Tuple[int, int], ring: int, label_side: Optional[Side] = 0):
 
         assert name not in Hexagon.__name_to_hexagon
         assert len(position_uv) == 2
@@ -320,6 +321,7 @@ class Hexagon:
         self.name = name
         self.position_uv = position_uv
         self.ring = ring
+        self.label_side = label_side
         self.index = None
 
         Hexagon.__name_to_hexagon[self.name] = self
@@ -410,68 +412,77 @@ class Hexagon:
     def __create_hexagons():
 
         # Row "a"
-        Hexagon('a1', (-1, -3), ring=0)
+        Hexagon('a1', (-1, -3), ring=0, label_side=Side.WEST)
         Hexagon('a2', (-0, -3), ring=0)
         Hexagon('a3', (1, -3), ring=0)
         Hexagon('a4', (2, -3), ring=0)
         Hexagon('a5', (3, -3), ring=0)
-        Hexagon('a6', (4, -3), ring=0)
+        Hexagon('a6', (4, -3), ring=0, label_side=Side.EAST)
 
         # Row "b"
-        Hexagon('b1', (-2, -2), ring=0)
+        Hexagon('b1', (-2, -2), ring=0, label_side=Side.WEST)
         Hexagon('b2', (-1, -2), ring=1)
         Hexagon('b3', (0, -2), ring=1)
         Hexagon('b4', (1, -2), ring=1)
         Hexagon('b5', (2, -2), ring=1)
         Hexagon('b6', (3, -2), ring=1)
-        Hexagon('b7', (4, -2), ring=0)
+        Hexagon('b7', (4, -2), ring=0, label_side=Side.EAST)
 
         # Row "c"
-        Hexagon('c1', (-2, -1), ring=0)
+        Hexagon('c1', (-2, -1), ring=0, label_side=Side.WEST)
         Hexagon('c2', (-1, -1), ring=1)
         Hexagon('c3', (0, -1), ring=2)
         Hexagon('c4', (1, -1), ring=2)
         Hexagon('c5', (2, -1), ring=1)
-        Hexagon('c6', (3, -1), ring=0)
+        Hexagon('c6', (3, -1), ring=0, label_side=Side.EAST)
 
         # Row "d"
-        Hexagon('d1', (-3, 0), ring=0)
+        Hexagon('d1', (-3, 0), ring=0, label_side=Side.WEST)
         Hexagon('d2', (-2, 0), ring=1)
         Hexagon('d3', (-1, 0), ring=2)
         Hexagon('d4', (0, 0), ring=3)
         Hexagon('d5', (1, 0), ring=2)
         Hexagon('d6', (2, 0), ring=1)
-        Hexagon('d7', (3, 0), ring=0)
+        Hexagon('d7', (3, 0), ring=0, label_side=Side.EAST)
 
         # Row "e"
-        Hexagon('e1', (-3, 1), ring=0)
+        Hexagon('e1', (-3, 1), ring=0, label_side=Side.WEST)
         Hexagon('e2', (-2, 1), ring=1)
         Hexagon('e3', (-1, 1), ring=2)
         Hexagon('e4', (0, 1), ring=2)
         Hexagon('e5', (1, 1), ring=1)
-        Hexagon('e6', (2, 1), ring=0)
+        Hexagon('e6', (2, 1), ring=0, label_side=Side.EAST)
 
         # Row "f"
-        Hexagon('f1', (-4, 2), ring=0)
+        Hexagon('f1', (-4, 2), ring=0, label_side=Side.WEST)
         Hexagon('f2', (-3, 2), ring=1)
         Hexagon('f3', (-2, 2), ring=1)
         Hexagon('f4', (-1, 2), ring=1)
         Hexagon('f5', (0, 2), ring=1)
         Hexagon('f6', (1, 2), ring=1)
-        Hexagon('f7', (2, 2), ring=0)
+        Hexagon('f7', (2, 2), ring=0, label_side=Side.EAST)
 
         # Row "g"
-        Hexagon('g1', (-4, 3), ring=0)
+        Hexagon('g1', (-4, 3), ring=0, label_side=Side.WEST)
         Hexagon('g2', (-3, 3), ring=0)
         Hexagon('g3', (-2, 3), ring=0)
         Hexagon('g4', (-1, 3), ring=0)
         Hexagon('g5', (0, 3), ring=0)
-        Hexagon('g6', (1, 3), ring=0)
+        Hexagon('g6', (1, 3), ring=0, label_side=Side.EAST)
 
 
-def draw_pijersi_board():
+def draw_pijersi_board(with_all_labels=True, without_labels=False):
     print()
     print("draw_pijersi_board: ...")
+
+    if without_labels:
+        file_name = 'pijersi_board_without_labels'
+
+    elif with_all_labels:
+        file_name = 'pijersi_board_with_all_labels'
+
+    else:
+        file_name = 'pijersi_board_with_few_labels'
 
     # Define the board
     board = draw.Drawing(width=CANVAS_CONFIG.board_width, height=CANVAS_CONFIG.board_height,
@@ -496,27 +507,42 @@ def draw_pijersi_board():
                              stroke=CANVAS_CONFIG.hexagon_line_color,
                              stroke_width=CANVAS_CONFIG.hexagon_line_width,
                              close='true')
-
-        label_location = abstract_hexagon.center + CANVAS_CONFIG.label_shift
-
-        board.append(draw.Text(text=abstract_hexagon.name,
-                               font_size=CANVAS_CONFIG.label_font_size,
-                               font_family=CANVAS_CONFIG.label_font_family,
-                               x=label_location[0],
-                               y=label_location[1],
-                               center=True,
-                               fill=CANVAS_CONFIG.label_color))
-
         board.append(hexagon)
+
+        if without_labels:
+            label_location = None
+
+        elif with_all_labels:
+            label_location = abstract_hexagon.center + CANVAS_CONFIG.label_vertical_shift
+
+        else:
+            if abstract_hexagon.label_side is not None:
+                if abstract_hexagon.label_side == Side.WEST:
+                    label_location = abstract_hexagon.center - CANVAS_CONFIG.label_horizontal_shift
+
+                elif abstract_hexagon.label_side == Side.EAST:
+                    label_location = abstract_hexagon.center + CANVAS_CONFIG.label_horizontal_shift
+
+                else:
+                    label_location = None
+
+        if label_location is not None:
+            board.append(draw.Text(text=abstract_hexagon.name,
+                                   font_size=CANVAS_CONFIG.label_font_size,
+                                   font_family=CANVAS_CONFIG.label_font_family,
+                                   x=label_location[0],
+                                   y=label_location[1],
+                                   center=True,
+                                   fill=CANVAS_CONFIG.label_color))
 
     print()
     print("draw_pijersi_board: save as SVG ...")
-    board.save_svg(os.path.join(_pictures_dir, 'pijersi_board.svg'))
+    board.save_svg(os.path.join(_pictures_dir, f"{file_name}.svg"))
     print("draw_pijersi_board: save as SVG done")
 
     print()
     print("draw_pijersi_board: save as PNG ...")
-    board.save_png(os.path.join(_pictures_dir, 'pijersi_board.png'))
+    board.save_png(os.path.join(_pictures_dir, f"{file_name}.png"))
     print("draw_pijersi_board: save as PNG done")
 
     print()
@@ -524,7 +550,9 @@ def draw_pijersi_board():
 
 
 def main():
-    draw_pijersi_board()
+    draw_pijersi_board(with_all_labels=True)
+    draw_pijersi_board(without_labels=True)
+    draw_pijersi_board(with_all_labels=False)
 
 
 CANVAS_CONFIG = make_canvas_config()
@@ -533,15 +561,15 @@ Hexagon.init()
 if __name__ == "__main__":
 
     print()
-    print("Hello")
+    print("__main__: Hello")
     print()
-    print(f"Python sys.version = {sys.version}")
+    print(f"__main__: Python sys.version = {sys.version}")
 
     main()
 
     print()
-    print("Bye")
+    print("__main__: Bye")
 
     if True:
         print()
-        _ = input("main: done ; press enter to terminate")
+        _ = input("__main__: done ; press enter to terminate")
