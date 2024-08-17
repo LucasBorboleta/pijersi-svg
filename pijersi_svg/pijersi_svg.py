@@ -153,6 +153,7 @@ class CanvasConfig:
     hexagon_width: float = None
     hexagon_side: float = None
     hexagon_height: float = None
+    hexagon_line_width: float = None
 
     hexagon_vertex_count: int = None
     hexagon_side_angle: float = None
@@ -164,9 +165,12 @@ class CanvasConfig:
 
     unit_u: TinyVector = None
     unit_v: TinyVector = None
-    
+
+    label_font_family: str = None
     label_font_size: int = None
     label_shift: TinyVector = None
+
+    hexagon_opacity: float = None
 
 
 def make_canvas_config():
@@ -176,6 +180,7 @@ def make_canvas_config():
     hexagon_width_cm = 2
     hexagon_side_cm = hexagon_width_cm/math.sqrt(3)
     hexagon_height_cm = 2*hexagon_side_cm
+    hexagon_line_width_cm = 0.1/4
 
     max_horizontal_hexagon_count = 7
     max_vertical_hexagon_count = 7
@@ -204,6 +209,9 @@ def make_canvas_config():
     hexagon_side = board_width*(hexagon_side_cm/board_width_cm)
     hexagon_height = board_width*(hexagon_height_cm/board_width_cm)
 
+    hexagon_line_width = max(
+        1, board_width*(hexagon_line_width_cm/board_width_cm))
+
     # Hexagon properties other than sizes
     hexagon_vertex_count = 6
     hexagon_side_angle = 2*math.pi/hexagon_vertex_count
@@ -219,11 +227,15 @@ def make_canvas_config():
     unit_u = unit_x
     unit_v = math.cos(hexagon_side_angle)*unit_x + \
         math.sin(hexagon_side_angle)*unit_y
-        
+
     # Label properties
+    label_font_family = 'Helvetica'
     label_font_size = int(hexagon_width*0.20)
     label_shift = -0.60*hexagon_side*unit_y
-    
+
+    # color and etc.
+    hexagon_opacity = 0.20
+
     return CanvasConfig(board_width_cm=board_width_cm,
                         board_height_cm=board_height_cm,
 
@@ -233,6 +245,7 @@ def make_canvas_config():
                         hexagon_width=hexagon_width,
                         hexagon_side=hexagon_side,
                         hexagon_height=hexagon_height,
+                        hexagon_line_width=hexagon_line_width,
 
                         hexagon_vertex_count=hexagon_vertex_count,
                         hexagon_side_angle=hexagon_side_angle,
@@ -244,9 +257,12 @@ def make_canvas_config():
 
                         unit_u=unit_u,
                         unit_v=unit_v,
-                        
+
+                        label_font_family=label_font_family,
                         label_font_size=label_font_size,
-                        label_shift=label_shift)
+                        label_shift=label_shift,
+
+                        hexagon_opacity=hexagon_opacity)
 
 
 class Hexagon:
@@ -263,7 +279,8 @@ class Hexagon:
 
     Self = TypeVar("Self", bound="Hexagon")
 
-    __slots__ = ('name', 'position_uv', 'index', 'center', 'vertex_data')
+    __slots__ = ('name', 'position_uv', 'ring',
+                 'index', 'center', 'vertex_data')
 
     __all_sorted_hexagons = []
     __init_done = False
@@ -273,7 +290,7 @@ class Hexagon:
 
     all = None  # shortcut to Hexagon.get_all()
 
-    def __init__(self, name: str, position_uv=Tuple[int, int]):
+    def __init__(self, name: str, position_uv: Tuple[int, int], ring: int):
 
         assert name not in Hexagon.__name_to_hexagon
         assert len(position_uv) == 2
@@ -282,6 +299,7 @@ class Hexagon:
 
         self.name = name
         self.position_uv = position_uv
+        self.ring = ring
         self.index = None
 
         Hexagon.__name_to_hexagon[self.name] = self
@@ -372,63 +390,63 @@ class Hexagon:
     def __create_hexagons():
 
         # Row "a"
-        Hexagon('a1', (-1, -3))
-        Hexagon('a2', (-0, -3))
-        Hexagon('a3', (1, -3))
-        Hexagon('a4', (2, -3))
-        Hexagon('a5', (3, -3))
-        Hexagon('a6', (4, -3))
+        Hexagon('a1', (-1, -3), ring=0)
+        Hexagon('a2', (-0, -3), ring=0)
+        Hexagon('a3', (1, -3), ring=0)
+        Hexagon('a4', (2, -3), ring=0)
+        Hexagon('a5', (3, -3), ring=0)
+        Hexagon('a6', (4, -3), ring=0)
 
         # Row "b"
-        Hexagon('b1', (-2, -2))
-        Hexagon('b2', (-1, -2))
-        Hexagon('b3', (0, -2))
-        Hexagon('b4', (1, -2))
-        Hexagon('b5', (2, -2))
-        Hexagon('b6', (3, -2))
-        Hexagon('b7', (4, -2))
+        Hexagon('b1', (-2, -2), ring=0)
+        Hexagon('b2', (-1, -2), ring=1)
+        Hexagon('b3', (0, -2), ring=1)
+        Hexagon('b4', (1, -2), ring=1)
+        Hexagon('b5', (2, -2), ring=1)
+        Hexagon('b6', (3, -2), ring=1)
+        Hexagon('b7', (4, -2), ring=0)
 
         # Row "c"
-        Hexagon('c1', (-2, -1))
-        Hexagon('c2', (-1, -1))
-        Hexagon('c3', (0, -1))
-        Hexagon('c4', (1, -1))
-        Hexagon('c5', (2, -1))
-        Hexagon('c6', (3, -1))
+        Hexagon('c1', (-2, -1), ring=0)
+        Hexagon('c2', (-1, -1), ring=1)
+        Hexagon('c3', (0, -1), ring=2)
+        Hexagon('c4', (1, -1), ring=2)
+        Hexagon('c5', (2, -1), ring=1)
+        Hexagon('c6', (3, -1), ring=0)
 
         # Row "d"
-        Hexagon('d1', (-3, 0))
-        Hexagon('d2', (-2, 0))
-        Hexagon('d3', (-1, 0))
-        Hexagon('d4', (0, 0))
-        Hexagon('d5', (1, 0))
-        Hexagon('d6', (2, 0))
-        Hexagon('d7', (3, 0))
+        Hexagon('d1', (-3, 0), ring=0)
+        Hexagon('d2', (-2, 0), ring=1)
+        Hexagon('d3', (-1, 0), ring=2)
+        Hexagon('d4', (0, 0), ring=3)
+        Hexagon('d5', (1, 0), ring=2)
+        Hexagon('d6', (2, 0), ring=1)
+        Hexagon('d7', (3, 0), ring=0)
 
         # Row "e"
-        Hexagon('e1', (-3, 1))
-        Hexagon('e2', (-2, 1))
-        Hexagon('e3', (-1, 1))
-        Hexagon('e4', (0, 1))
-        Hexagon('e5', (1, 1))
-        Hexagon('e6', (2, 1))
+        Hexagon('e1', (-3, 1), ring=0)
+        Hexagon('e2', (-2, 1), ring=1)
+        Hexagon('e3', (-1, 1), ring=2)
+        Hexagon('e4', (0, 1), ring=2)
+        Hexagon('e5', (1, 1), ring=1)
+        Hexagon('e6', (2, 1), ring=0)
 
         # Row "f"
-        Hexagon('f1', (-4, 2))
-        Hexagon('f2', (-3, 2))
-        Hexagon('f3', (-2, 2))
-        Hexagon('f4', (-1, 2))
-        Hexagon('f5', (0, 2))
-        Hexagon('f6', (1, 2))
-        Hexagon('f7', (2, 2))
+        Hexagon('f1', (-4, 2), ring=0)
+        Hexagon('f2', (-3, 2), ring=1)
+        Hexagon('f3', (-2, 2), ring=1)
+        Hexagon('f4', (-1, 2), ring=1)
+        Hexagon('f5', (0, 2), ring=1)
+        Hexagon('f6', (1, 2), ring=1)
+        Hexagon('f7', (2, 2), ring=0)
 
         # Row "g"
-        Hexagon('g1', (-4, 3))
-        Hexagon('g2', (-3, 3))
-        Hexagon('g3', (-2, 3))
-        Hexagon('g4', (-1, 3))
-        Hexagon('g5', (0, 3))
-        Hexagon('g6', (1, 3))
+        Hexagon('g1', (-4, 3), ring=0)
+        Hexagon('g2', (-3, 3), ring=0)
+        Hexagon('g3', (-2, 3), ring=0)
+        Hexagon('g4', (-1, 3), ring=0)
+        Hexagon('g5', (0, 3), ring=0)
+        Hexagon('g6', (1, 3), ring=0)
 
 
 def draw_pijersi_board():
@@ -450,20 +468,24 @@ def draw_pijersi_board():
     # Draw hexagons
 
     for abstract_hexagon in Hexagon.all:
+
         hexagon = draw.Lines(*abstract_hexagon.vertex_data,
-                             fill=None, fill_opacity=0.25,
+                             fill=None, 
+                             fill_opacity=CANVAS_CONFIG.hexagon_opacity*(1 if abstract_hexagon.ring % 2 == 0 else 0),
                              stroke='black',
+                             stroke_width=CANVAS_CONFIG.hexagon_line_width,
                              close='true')
-        
+
         label_location = abstract_hexagon.center + CANVAS_CONFIG.label_shift
-        
-        board.append(draw.Text(text=abstract_hexagon.name, font_size=CANVAS_CONFIG.label_font_size, 
-                               x=label_location[0], 
+
+        board.append(draw.Text(text=abstract_hexagon.name,
+                               font_size=CANVAS_CONFIG.label_font_size,
+                               font_family=CANVAS_CONFIG.label_font_family,
+                               x=label_location[0],
                                y=label_location[1],
                                center=True,
                                fill='black'))
 
-        
         board.append(hexagon)
 
     print()
