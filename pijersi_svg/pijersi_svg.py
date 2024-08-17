@@ -161,6 +161,7 @@ class CanvasConfig:
     hexagon_width: float = None
     hexagon_side: float = None
     hexagon_height: float = None
+    hexagon_padding: float = None
     hexagon_line_width: float = None
     hexagon_line_color: str = None
     hexagon_opacity: float = None
@@ -193,6 +194,7 @@ def make_canvas_config():
     hexagon_width_cm = 3
     hexagon_side_cm = hexagon_width_cm/math.sqrt(3)
     hexagon_height_cm = 2*hexagon_side_cm
+    hexagon_padding_cm = 0.2
     hexagon_line_width_cm = 0.1/4
 
     max_horizontal_hexagon_count = 7
@@ -221,6 +223,7 @@ def make_canvas_config():
     hexagon_width = board_width*(hexagon_width_cm/board_width_cm)
     hexagon_side = board_width*(hexagon_side_cm/board_width_cm)
     hexagon_height = board_width*(hexagon_height_cm/board_width_cm)
+    hexagon_padding = board_width*(hexagon_padding_cm/board_width_cm)
 
     # Hexagon properties other than sizes
     hexagon_vertex_count = 6
@@ -262,6 +265,7 @@ def make_canvas_config():
                                  hexagon_width=hexagon_width,
                                  hexagon_side=hexagon_side,
                                  hexagon_height=hexagon_height,
+                                 hexagon_padding=hexagon_padding,
                                  hexagon_line_width=hexagon_line_width,
                                  hexagon_opacity=hexagon_opacity,
                                  hexagon_line_color=hexagon_line_color,
@@ -301,7 +305,7 @@ class Hexagon:
     Self = TypeVar("Self", bound="Hexagon")
 
     __slots__ = ('name', 'position_uv', 'ring', 'label_side',
-                 'index', 'center', 'vertex_data')
+                 'index', 'center')
 
     __all_sorted_hexagons = []
     __init_done = False
@@ -331,21 +335,6 @@ class Hexagon:
 
         self.center = CANVAS_CONFIG.origin + CANVAS_CONFIG.hexagon_width * \
             (u*CANVAS_CONFIG.unit_u + v*CANVAS_CONFIG.unit_v)
-
-        self.vertex_data = list()
-
-        for vertex_index in range(CANVAS_CONFIG.hexagon_vertex_count):
-            vertex_angle = (1/2 + vertex_index) * \
-                CANVAS_CONFIG.hexagon_side_angle
-
-            hexagon_vertex = self.center
-            hexagon_vertex = hexagon_vertex + CANVAS_CONFIG.hexagon_side * \
-                math.cos(vertex_angle)*CANVAS_CONFIG.unit_x
-            hexagon_vertex = hexagon_vertex + CANVAS_CONFIG.hexagon_side * \
-                math.sin(vertex_angle)*CANVAS_CONFIG.unit_y
-
-            self.vertex_data.append(hexagon_vertex[0])
-            self.vertex_data.append(hexagon_vertex[1])
 
     def __str__(self):
         return f"Hexagon({self.name}, {self.position_uv}, {self.index}"
@@ -500,7 +489,26 @@ def draw_pijersi_board(with_all_labels=True, without_labels=False):
 
     for abstract_hexagon in Hexagon.all:
 
-        hexagon = draw.Lines(*abstract_hexagon.vertex_data,
+        vertex_data = list()
+
+        scale = 1 - CANVAS_CONFIG.hexagon_padding/CANVAS_CONFIG.hexagon_width
+
+        for vertex_index in range(CANVAS_CONFIG.hexagon_vertex_count):
+            vertex_angle = (1/2 + vertex_index) * \
+                CANVAS_CONFIG.hexagon_side_angle
+
+            hexagon_vertex = abstract_hexagon.center
+
+            hexagon_vertex = hexagon_vertex + scale*CANVAS_CONFIG.hexagon_side * \
+                math.cos(vertex_angle)*CANVAS_CONFIG.unit_x
+
+            hexagon_vertex = hexagon_vertex + scale*CANVAS_CONFIG.hexagon_side * \
+                math.sin(vertex_angle)*CANVAS_CONFIG.unit_y
+
+            vertex_data.append(hexagon_vertex[0])
+            vertex_data.append(hexagon_vertex[1])
+
+        hexagon = draw.Lines(*vertex_data,
                              fill=None,
                              fill_opacity=CANVAS_CONFIG.hexagon_opacity *
                              (1 if abstract_hexagon.ring % 2 == 0 else 0),
