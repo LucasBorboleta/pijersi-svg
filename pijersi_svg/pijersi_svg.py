@@ -460,7 +460,7 @@ class Hexagon:
         Hexagon('g6', (1, 3), ring=0, label_side=Side.EAST)
 
 
-def draw_pijersi_board(with_all_labels=False, without_labels=False):
+def draw_pijersi_board(with_all_labels=False, without_labels=False, with_decoration=False):
     print()
     print("draw_pijersi_board: ...")
 
@@ -472,6 +472,9 @@ def draw_pijersi_board(with_all_labels=False, without_labels=False):
 
     else:
         file_name = 'pijersi_board_with_few_labels'
+
+    if with_decoration:
+        file_name += '_with_decoration'
 
     # Define the board
     board = draw.Drawing(width=CANVAS_CONFIG.board_width, height=CANVAS_CONFIG.board_height,
@@ -491,7 +494,7 @@ def draw_pijersi_board(with_all_labels=False, without_labels=False):
 
         vertex_data = list()
 
-        scale = 1 - CANVAS_CONFIG.hexagon_padding/CANVAS_CONFIG.hexagon_width
+        hexagon_scale = 1 - CANVAS_CONFIG.hexagon_padding/CANVAS_CONFIG.hexagon_width
 
         for vertex_index in range(CANVAS_CONFIG.hexagon_vertex_count):
             vertex_angle = (1/2 + vertex_index) * \
@@ -499,10 +502,10 @@ def draw_pijersi_board(with_all_labels=False, without_labels=False):
 
             hexagon_vertex = abstract_hexagon.center
 
-            hexagon_vertex = hexagon_vertex + scale*CANVAS_CONFIG.hexagon_side * \
+            hexagon_vertex = hexagon_vertex + hexagon_scale*CANVAS_CONFIG.hexagon_side * \
                 math.cos(vertex_angle)*CANVAS_CONFIG.unit_x
 
-            hexagon_vertex = hexagon_vertex + scale*CANVAS_CONFIG.hexagon_side * \
+            hexagon_vertex = hexagon_vertex + hexagon_scale*CANVAS_CONFIG.hexagon_side * \
                 math.sin(vertex_angle)*CANVAS_CONFIG.unit_y
 
             vertex_data.append(hexagon_vertex[0])
@@ -516,6 +519,34 @@ def draw_pijersi_board(with_all_labels=False, without_labels=False):
                              stroke_width=CANVAS_CONFIG.hexagon_line_width,
                              close='true')
         board.append(hexagon)
+
+        if with_decoration and abstract_hexagon.ring % 2 != 0:
+
+            vertex_data = list()
+
+            hexagon_scale = 0.75
+
+            for vertex_index in range(CANVAS_CONFIG.hexagon_vertex_count):
+                vertex_angle = vertex_index*CANVAS_CONFIG.hexagon_side_angle
+
+                hexagon_vertex = abstract_hexagon.center
+
+                hexagon_vertex = hexagon_vertex + hexagon_scale*CANVAS_CONFIG.hexagon_side * \
+                    math.cos(vertex_angle)*CANVAS_CONFIG.unit_x
+
+                hexagon_vertex = hexagon_vertex + hexagon_scale*CANVAS_CONFIG.hexagon_side * \
+                    math.sin(vertex_angle)*CANVAS_CONFIG.unit_y
+
+                vertex_data.append(hexagon_vertex[0])
+                vertex_data.append(hexagon_vertex[1])
+
+            hexagon = draw.Lines(*vertex_data,
+                                 fill=None,
+                                 fill_opacity=0,
+                                 stroke='black',
+                                 stroke_width=CANVAS_CONFIG.hexagon_line_width,
+                                 close='true')
+            board.append(hexagon)
 
         if without_labels:
             label_location = None
@@ -561,6 +592,7 @@ def main():
     draw_pijersi_board(with_all_labels=True)
     draw_pijersi_board(without_labels=True)
     draw_pijersi_board(with_all_labels=False)
+    draw_pijersi_board(with_all_labels=False, with_decoration=True)
 
 
 CANVAS_CONFIG = make_canvas_config()
