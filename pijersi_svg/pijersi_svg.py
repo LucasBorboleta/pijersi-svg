@@ -154,6 +154,8 @@ class CanvasConfig:
     hexagon_side: float = None
     hexagon_height: float = None
     hexagon_line_width: float = None
+    hexagon_line_color: str = None
+    hexagon_opacity: float = None
 
     hexagon_vertex_count: int = None
     hexagon_side_angle: float = None
@@ -166,15 +168,14 @@ class CanvasConfig:
     unit_u: TinyVector = None
     unit_v: TinyVector = None
 
+    label_color: str = None
     label_font_family: str = None
     label_font_size: int = None
     label_shift: TinyVector = None
 
-    hexagon_opacity: float = None
-
 
 def make_canvas_config():
-    
+
     print()
     print("make_canvas_config: ...")
 
@@ -202,8 +203,6 @@ def make_canvas_config():
                        (max_vertical_hexagon_count//2)*hexagon_side_cm +
                        (max_vertical_hexagon_count - max_vertical_hexagon_count//2)*hexagon_height_cm +
                        board_bottom_margin_cm)
-    
-    
 
     # Deduce other sizes in pixels
 
@@ -213,9 +212,6 @@ def make_canvas_config():
     hexagon_width = board_width*(hexagon_width_cm/board_width_cm)
     hexagon_side = board_width*(hexagon_side_cm/board_width_cm)
     hexagon_height = board_width*(hexagon_height_cm/board_width_cm)
-
-    hexagon_line_width = max(
-        1, board_width*(hexagon_line_width_cm/board_width_cm))
 
     # Hexagon properties other than sizes
     hexagon_vertex_count = 6
@@ -234,41 +230,47 @@ def make_canvas_config():
         math.sin(hexagon_side_angle)*unit_y
 
     # Label properties
+    label_color = 'black'
     label_font_family = 'Helvetica'
     label_font_size = int(hexagon_width*0.20)
     label_shift = -0.60*hexagon_side*unit_y
 
     # color and etc.
     hexagon_opacity = 0.20
-    
+    hexagon_line_color = 'black'
+
+    hexagon_line_width = max(
+        1, board_width*(hexagon_line_width_cm/board_width_cm))
+
     # make and return the CanvasConfig
     canvas_config = CanvasConfig(board_width_cm=board_width_cm,
-                        board_height_cm=board_height_cm,
+                                 board_height_cm=board_height_cm,
 
-                        board_width=board_width,
-                        board_height=board_height,
+                                 board_width=board_width,
+                                 board_height=board_height,
 
-                        hexagon_width=hexagon_width,
-                        hexagon_side=hexagon_side,
-                        hexagon_height=hexagon_height,
-                        hexagon_line_width=hexagon_line_width,
+                                 hexagon_width=hexagon_width,
+                                 hexagon_side=hexagon_side,
+                                 hexagon_height=hexagon_height,
+                                 hexagon_line_width=hexagon_line_width,
+                                 hexagon_opacity=hexagon_opacity,
+                                 hexagon_line_color=hexagon_line_color,
 
-                        hexagon_vertex_count=hexagon_vertex_count,
-                        hexagon_side_angle=hexagon_side_angle,
+                                 hexagon_vertex_count=hexagon_vertex_count,
+                                 hexagon_side_angle=hexagon_side_angle,
 
-                        origin=origin,
+                                 origin=origin,
 
-                        unit_x=unit_x,
-                        unit_y=unit_y,
+                                 unit_x=unit_x,
+                                 unit_y=unit_y,
 
-                        unit_u=unit_u,
-                        unit_v=unit_v,
+                                 unit_u=unit_u,
+                                 unit_v=unit_v,
 
-                        label_font_family=label_font_family,
-                        label_font_size=label_font_size,
-                        label_shift=label_shift,
-
-                        hexagon_opacity=hexagon_opacity)
+                                 label_color=label_color,
+                                 label_shift=label_shift,
+                                 label_font_family=label_font_family,
+                                 label_font_size=label_font_size)
 
     print()
     print(f"make_canvas_config: board_width_cm = {board_width_cm:.2f} ")
@@ -281,6 +283,7 @@ def make_canvas_config():
     print()
     print("make_canvas_config: done")
     return canvas_config
+
 
 class Hexagon:
 
@@ -482,14 +485,15 @@ def draw_pijersi_board():
                            fill='#BF9B7A')
     board.append(outer)
 
-    # Draw hexagons
+    # Draw the hexagons
 
     for abstract_hexagon in Hexagon.all:
 
         hexagon = draw.Lines(*abstract_hexagon.vertex_data,
-                             fill=None, 
-                             fill_opacity=CANVAS_CONFIG.hexagon_opacity*(1 if abstract_hexagon.ring % 2 == 0 else 0),
-                             stroke='black',
+                             fill=None,
+                             fill_opacity=CANVAS_CONFIG.hexagon_opacity *
+                             (1 if abstract_hexagon.ring % 2 == 0 else 0),
+                             stroke=CANVAS_CONFIG.hexagon_line_color,
                              stroke_width=CANVAS_CONFIG.hexagon_line_width,
                              close='true')
 
@@ -501,7 +505,7 @@ def draw_pijersi_board():
                                x=label_location[0],
                                y=label_location[1],
                                center=True,
-                               fill='black'))
+                               fill=CANVAS_CONFIG.label_color))
 
         board.append(hexagon)
 
