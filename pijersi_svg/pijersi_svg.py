@@ -250,7 +250,7 @@ def make_canvas_config():
 
     # color and etc.
     hexagon_opacity = 0.20
-    hexagon_line_color = 'black'
+    hexagon_line_color = None
 
     hexagon_line_width = max(
         1, board_width*(hexagon_line_width_cm/board_width_cm))
@@ -460,7 +460,7 @@ class Hexagon:
         Hexagon('g6', (1, 3), ring=0, label_side=Side.EAST)
 
 
-def draw_pijersi_board(with_all_labels=True, without_labels=False):
+def draw_pijersi_board(with_all_labels=False, without_labels=False):
     print()
     print("draw_pijersi_board: ...")
 
@@ -511,7 +511,7 @@ def draw_pijersi_board(with_all_labels=True, without_labels=False):
         hexagon = draw.Lines(*vertex_data,
                              fill=None,
                              fill_opacity=CANVAS_CONFIG.hexagon_opacity *
-                             (1 if abstract_hexagon.ring % 2 == 0 else 0),
+                             (1 if abstract_hexagon.ring % 2 == 0 else 0.5),
                              stroke=CANVAS_CONFIG.hexagon_line_color,
                              stroke_width=CANVAS_CONFIG.hexagon_line_width,
                              close='true')
