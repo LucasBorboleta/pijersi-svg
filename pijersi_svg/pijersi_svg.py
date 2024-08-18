@@ -259,7 +259,7 @@ def make_canvas_config():
     # color and etc.
     board_color = '#BF9B7A'
     # board_color = 'white'
-    hexagon_opacity = 0.20
+    hexagon_opacity = 0.45
     hexagon_line_color = 'black'
 
     hexagon_line_width = max(
@@ -526,18 +526,24 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
 
             hexagon_vertex_data.append(hexagon_vertex[0])
             hexagon_vertex_data.append(hexagon_vertex[1])
+        
+        hexagon_opacity = CANVAS_CONFIG.hexagon_opacity*(1 if abstract_hexagon.ring % 2 == 0 else 0.5)   
+        
+        hexagon_gradient = draw.RadialGradient(cx=abstract_hexagon.center[0], cy=abstract_hexagon.center[1], r=hexagon_scale*CANVAS_CONFIG.hexagon_side)
+        hexagon_gradient.add_stop(offset=0, color='black', opacity=hexagon_opacity*0.00)
+        hexagon_gradient.add_stop(offset=1, color='black', opacity=hexagon_opacity*1.00)
 
         hexagon = draw.Lines(*hexagon_vertex_data,
-                             fill=None,
-                             fill_opacity=CANVAS_CONFIG.hexagon_opacity *
-                             (1 if abstract_hexagon.ring % 2 != 0 else 0.5),
+                             fill=hexagon_gradient,
+                             # fill=None,
+                             # fill_opacity=hexagon_opacity,
                              stroke=CANVAS_CONFIG.hexagon_line_color,
                              stroke_width=CANVAS_CONFIG.hexagon_line_width,
                              close=True)
         board.append(hexagon)
 
         if with_decoration and abstract_hexagon.ring % 2 == 1:
-            segment_count = 1_000
+            segment_count = 500
             for _ in range(segment_count):
 
                 border_points = []
@@ -563,12 +569,11 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
                     segment_data.append(segment_edge[0])
                     segment_data.append(segment_edge[1])
 
-                segment = draw.Lines(*segment_data,
+                segment = draw.Line(*segment_data,
                                      fill=None,
                                      fill_opacity=0,
                                      stroke=CANVAS_CONFIG.hexagon_line_color,
-                                     stroke_width=CANVAS_CONFIG.hexagon_line_width,
-                                     close=False)
+                                     stroke_width=CANVAS_CONFIG.hexagon_line_width)
 
                 board.append(segment)
 
