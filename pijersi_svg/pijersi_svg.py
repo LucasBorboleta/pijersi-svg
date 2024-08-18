@@ -497,7 +497,7 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
 
     for abstract_hexagon in Hexagon.all:
 
-        hexagon_vertex_data =[]
+        hexagon_vertex_data = []
 
         hexagon_scale = 1 - CANVAS_CONFIG.hexagon_padding/CANVAS_CONFIG.hexagon_width
 
@@ -525,62 +525,74 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
                              close='true')
         board.append(hexagon)
 
-        if with_decoration and abstract_hexagon.ring % 2 != 0:
+        if with_decoration and abstract_hexagon.ring % 2 == 0:
 
-            inner_hexagon_vertex_data =[]
-            inner_hexagon_vertices =[]
+            decorater_polygon_side_count = 12
 
-            inner_hexagon_scale = 0.60
+            decorater_polygon_vertex_data = []
+            decorater_polygon_vertices = []
 
-            for vertex_index in range(CANVAS_CONFIG.hexagon_vertex_count):
-                vertex_angle = (vertex_index)*CANVAS_CONFIG.hexagon_side_angle
+            decorater_polygon_scale = 0.70
 
-                inner_hexagon_vertex = abstract_hexagon.center
+            for vertex_index in range(decorater_polygon_side_count):
+                vertex_angle = (vertex_index)*2*math.pi / \
+                    decorater_polygon_side_count
 
-                inner_hexagon_vertex = inner_hexagon_vertex + inner_hexagon_scale*CANVAS_CONFIG.hexagon_side * \
+                decorater_polygon_vertex = abstract_hexagon.center
+
+                decorater_polygon_vertex = decorater_polygon_vertex + decorater_polygon_scale*CANVAS_CONFIG.hexagon_side * \
                     math.cos(vertex_angle)*CANVAS_CONFIG.unit_x
 
-                inner_hexagon_vertex = inner_hexagon_vertex + inner_hexagon_scale*CANVAS_CONFIG.hexagon_side * \
+                decorater_polygon_vertex = decorater_polygon_vertex + decorater_polygon_scale*CANVAS_CONFIG.hexagon_side * \
                     math.sin(vertex_angle)*CANVAS_CONFIG.unit_y
 
-                inner_hexagon_vertex_data.append(inner_hexagon_vertex[0])
-                inner_hexagon_vertex_data.append(inner_hexagon_vertex[1])
-                
-                inner_hexagon_vertices.append(inner_hexagon_vertex)
+                decorater_polygon_vertex_data.append(
+                    decorater_polygon_vertex[0])
+                decorater_polygon_vertex_data.append(
+                    decorater_polygon_vertex[1])
 
-            inner_hexagon = draw.Lines(*inner_hexagon_vertex_data,
-                                 fill=None,
-                                 fill_opacity=0,
-                                 stroke='black',
-                                 stroke_width=CANVAS_CONFIG.hexagon_line_width*2,
-                                 close='true')
-            board.append(inner_hexagon)
+                decorater_polygon_vertices.append(decorater_polygon_vertex)
 
-            
-            for (vertex_1, vertex_2) in zip(inner_hexagon_vertices, inner_hexagon_vertices[1:] + [inner_hexagon_vertices[0]]):
-                vector_0 = vertex_2 - vertex_1
-                vector_1 = vector_0.make_rotation(-math.pi/2)
-                vector_2 = vector_1.make_rotation(-math.pi/2)
-                
-                inner_square_vertices = []
-                inner_square_vertices.append(vertex_1)
-                inner_square_vertices.append(inner_square_vertices[0] + vector_0)
-                inner_square_vertices.append(inner_square_vertices[1] + vector_1)
-                inner_square_vertices.append(inner_square_vertices[2] + vector_2)
-                inner_square_vertices.append(inner_square_vertices[0] )
-                
-                inner_square_vertex_data = []
-                for inner_square_vertex in inner_square_vertices:
-                    inner_square_vertex_data.append(inner_square_vertex[0])
-                    inner_square_vertex_data.append(inner_square_vertex[1])
-                    
-                inner_square = draw.Lines(*inner_square_vertex_data,
-                                     fill=None,
-                                     fill_opacity=0,
-                                     stroke='black',
-                                     stroke_width=CANVAS_CONFIG.hexagon_line_width*2,
-                                     close='true')
-                board.append(inner_square)                
+            decorater_polygon = draw.Lines(*decorater_polygon_vertex_data,
+                                           fill=None,
+                                           fill_opacity=0,
+                                           stroke='black',
+                                           stroke_width=CANVAS_CONFIG.hexagon_line_width,
+                                           close='true')
+            board.append(decorater_polygon)
+
+            for (vertex_1, vertex_2) in zip(decorater_polygon_vertices, decorater_polygon_vertices[1:] + [decorater_polygon_vertices[0]]):
+                rotating_polygon_side_count = 6
+
+                rotating_polygon_vertices = []
+                for rotating_polygon_side_index in range(rotating_polygon_side_count):
+
+                    if rotating_polygon_side_index == 0:
+                        vector = vertex_2 - vertex_1
+                        rotating_polygon_vertices.append(vertex_1)
+
+                    else:
+                        vector = vector.make_rotation(-2 *
+                                                      math.pi/rotating_polygon_side_count)
+
+                    rotating_polygon_vertices.append(
+                        rotating_polygon_vertices[rotating_polygon_side_index] + vector)
+                rotating_polygon_vertices.append(rotating_polygon_vertices[0])
+
+                rotating_polygon_vertex_data = []
+                for rotating_polygon_vertex in rotating_polygon_vertices:
+                    rotating_polygon_vertex_data.append(
+                        rotating_polygon_vertex[0])
+                    rotating_polygon_vertex_data.append(
+                        rotating_polygon_vertex[1])
+
+                rotating_polygon = draw.Lines(*rotating_polygon_vertex_data,
+                                              fill=None,
+                                              fill_opacity=0,
+                                              stroke='black',
+                                              stroke_width=CANVAS_CONFIG.hexagon_line_width,
+                                              close='true')
+                board.append(rotating_polygon)
 
         if without_labels:
             label_location = None
@@ -627,6 +639,7 @@ def main():
     draw_board(without_labels=True)
     draw_board(with_all_labels=False)
     draw_board(with_all_labels=False, with_decoration=True)
+    draw_board(without_labels=True, with_decoration=True)
 
 
 CANVAS_CONFIG = make_canvas_config()
