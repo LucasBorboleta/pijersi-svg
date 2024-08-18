@@ -530,7 +530,7 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
         hexagon = draw.Lines(*hexagon_vertex_data,
                              fill=None,
                              fill_opacity=CANVAS_CONFIG.hexagon_opacity *
-                             (1 if abstract_hexagon.ring % 2 == 0 else 0.5),
+                             (1 if abstract_hexagon.ring % 2 != 0 else 0.5),
                              stroke=CANVAS_CONFIG.hexagon_line_color,
                              stroke_width=CANVAS_CONFIG.hexagon_line_width,
                              close=True)
