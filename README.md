@@ -1,8 +1,8 @@
 # Pijersi-SVG
 This repository provides:
 
-- A Python program that draws SVG pictures for the Pijersi boardgame : the board and the cubes.
-- SVG pictures for making a Pijersi boardgame set.
+- A Python program that draws SVG pictures for the Pijersi boardgame set.
+- SVG pictures for making a Pijersi boardgame set: the board and the 28 cubes.
 
 See also the following  [**LICENSE**](./docs/LICENSE.txt) and  [**COPYRIGHT**](./docs/COPYRIGHT.md)  documents. 
 
