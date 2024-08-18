@@ -202,7 +202,7 @@ def make_canvas_config():
     hexagon_width_cm = 3
     hexagon_side_cm = hexagon_width_cm/math.sqrt(3)
     hexagon_height_cm = 2*hexagon_side_cm
-    hexagon_padding_cm = 0.2
+    hexagon_padding_cm = 0.3
     hexagon_line_width_cm = 0.1/4
 
     max_horizontal_hexagon_count = 7
