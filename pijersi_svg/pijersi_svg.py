@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import enum
 import math
 import os
+import random
 import sys
 
 from typing import Optional
@@ -163,6 +164,8 @@ class CanvasConfig:
     board_width: float = None
     board_height: float = None
 
+    board_color: str = None
+
     hexagon_width: float = None
     hexagon_side: float = None
     hexagon_height: float = None
@@ -254,6 +257,8 @@ def make_canvas_config():
     label_horizontal_shift = 1.20*hexagon_side*unit_x
 
     # color and etc.
+    board_color = '#BF9B7A'
+    # board_color = 'white'
     hexagon_opacity = 0.20
     hexagon_line_color = 'black'
 
@@ -266,6 +271,8 @@ def make_canvas_config():
 
                                  board_width=board_width,
                                  board_height=board_height,
+
+                                 board_color=board_color,
 
                                  hexagon_width=hexagon_width,
                                  hexagon_side=hexagon_side,
@@ -490,7 +497,8 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
     # Draw the outer rectangle
     outer = draw.Rectangle(x=-CANVAS_CONFIG.board_width/2, y=-CANVAS_CONFIG.board_height/2,
                            width=CANVAS_CONFIG.board_width, height=CANVAS_CONFIG.board_height,
-                           fill='#BF9B7A')
+                           fill=CANVAS_CONFIG.board_color)
+
     board.append(outer)
 
     # Draw the hexagons
@@ -498,6 +506,7 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
     for abstract_hexagon in Hexagon.all:
 
         hexagon_vertex_data = []
+        hexagon_vertices = []
 
         hexagon_scale = 1 - CANVAS_CONFIG.hexagon_padding/CANVAS_CONFIG.hexagon_width
 
@@ -513,6 +522,8 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
             hexagon_vertex = hexagon_vertex + hexagon_scale*CANVAS_CONFIG.hexagon_side * \
                 math.sin(vertex_angle)*CANVAS_CONFIG.unit_y
 
+            hexagon_vertices.append(hexagon_vertex)
+
             hexagon_vertex_data.append(hexagon_vertex[0])
             hexagon_vertex_data.append(hexagon_vertex[1])
 
@@ -522,8 +533,44 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
                              (1 if abstract_hexagon.ring % 2 == 0 else 0.5),
                              stroke=CANVAS_CONFIG.hexagon_line_color,
                              stroke_width=CANVAS_CONFIG.hexagon_line_width,
-                             close='true')
+                             close=True)
         board.append(hexagon)
+
+        if with_decoration and abstract_hexagon.ring % 2 == 1:
+            segment_count = 1_000
+            for _ in range(segment_count):
+
+                border_points = []
+                for _ in range(2):
+                    vertices = random.sample(hexagon_vertices, 2)
+                    p = random.uniform(0, 1)
+                    border_points.append(
+                        vertices[0] + p*(vertices[1] - vertices[0]))
+
+                t = random.uniform(0, 1)
+                u = random.uniform(0.02, 0.05)
+                a = min(1, max(0, t - u/2))
+                b = min(1, max(0, t + u/2))
+
+                segment_edges = []
+                segment_edges.append(
+                    border_points[0] + a*(border_points[1] - border_points[0]))
+                segment_edges.append(
+                    border_points[0] + b*(border_points[1] - border_points[0]))
+
+                segment_data = []
+                for segment_edge in segment_edges:
+                    segment_data.append(segment_edge[0])
+                    segment_data.append(segment_edge[1])
+
+                segment = draw.Lines(*segment_data,
+                                     fill=None,
+                                     fill_opacity=0,
+                                     stroke=CANVAS_CONFIG.hexagon_line_color,
+                                     stroke_width=CANVAS_CONFIG.hexagon_line_width,
+                                     close=False)
+
+                board.append(segment)
 
         if with_decoration and abstract_hexagon.ring % 2 == 0:
 
@@ -556,9 +603,9 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
             decorater_polygon = draw.Lines(*decorater_polygon_vertex_data,
                                            fill=None,
                                            fill_opacity=0,
-                                           stroke='black',
+                                           stroke=CANVAS_CONFIG.hexagon_line_color,
                                            stroke_width=CANVAS_CONFIG.hexagon_line_width,
-                                           close='true')
+                                           close=True)
             board.append(decorater_polygon)
 
             for (vertex_1, vertex_2) in zip(decorater_polygon_vertices, decorater_polygon_vertices[1:] + [decorater_polygon_vertices[0]]):
@@ -589,9 +636,9 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
                 rotating_polygon = draw.Lines(*rotating_polygon_vertex_data,
                                               fill=None,
                                               fill_opacity=0,
-                                              stroke='black',
+                                              stroke=CANVAS_CONFIG.hexagon_line_color,
                                               stroke_width=CANVAS_CONFIG.hexagon_line_width,
-                                              close='true')
+                                              close=True)
                 board.append(rotating_polygon)
 
         if without_labels:
