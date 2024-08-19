@@ -44,6 +44,24 @@ class Side(enum.Enum):
     EAST = enum.auto()
 
 
+class CubeKind(enum.Enum):
+    ROCK = enum.auto()
+    PAPER = enum.auto()
+    SCISSORS = enum.auto()
+    WISE = enum.auto()
+
+
+class CubeColor(enum.Enum):
+    WHITE = enum.auto()
+    BLACK = enum.auto()
+
+
+@dataclass
+class Cube:
+    kind: CubeKind = None
+    color: CubeColor = None
+
+
 class TinyVector:
     """Lightweight algebra on 2D vectors, inspired by numpy ndarray."""
 
@@ -156,7 +174,30 @@ class TinyVector:
 
 
 @dataclass
-class CanvasConfig:
+class CubeConfig:
+
+    cube_side_cm: float = None
+
+    layout: dict = None
+    row_count: int = None
+    col_count: int = None
+
+    support_width_cm: float = None
+    support_height_cm: float = None
+    support_color: str = None
+
+    support_width: float = None
+    support_height: float = None
+
+    cube_side: float = None
+    cube_margin: float = None
+    cube_shift: float = None
+    cube_line_width: float = None
+    cube_decoration_width: float = None
+
+
+@dataclass
+class BoardConfig:
 
     board_width_cm: float = None
     board_height_cm: float = None
@@ -192,14 +233,146 @@ class CanvasConfig:
     label_horizontal_shift: TinyVector = None
 
 
-def make_canvas_config():
+def make_cube_config():
 
     print()
-    print("make_canvas_config: ...")
+    print("make_cube_config: ...")
+
+    # Define the abstract layout
+
+    layout = {}
+
+    layout[(0, 0)] = Cube(kind=CubeKind.ROCK, color=CubeColor.BLACK)
+    layout[(0, 1)] = Cube(kind=CubeKind.ROCK, color=CubeColor.BLACK)
+    layout[(0, 2)] = Cube(kind=CubeKind.ROCK, color=CubeColor.BLACK)
+    layout[(0, 3)] = Cube(kind=CubeKind.ROCK, color=CubeColor.BLACK)
+
+    layout[(0, 4)] = Cube(kind=CubeKind.WISE, color=CubeColor.BLACK)
+    layout[(0, 5)] = Cube(kind=CubeKind.WISE, color=CubeColor.BLACK)
+
+    layout[(1, 0)] = Cube(kind=CubeKind.PAPER, color=CubeColor.BLACK)
+    layout[(1, 1)] = Cube(kind=CubeKind.PAPER, color=CubeColor.BLACK)
+    layout[(1, 2)] = Cube(kind=CubeKind.PAPER, color=CubeColor.BLACK)
+    layout[(1, 3)] = Cube(kind=CubeKind.PAPER, color=CubeColor.BLACK)
+
+    layout[(2, 0)] = Cube(kind=CubeKind.SCISSORS, color=CubeColor.BLACK)
+    layout[(2, 1)] = Cube(kind=CubeKind.SCISSORS, color=CubeColor.BLACK)
+    layout[(2, 2)] = Cube(kind=CubeKind.SCISSORS, color=CubeColor.BLACK)
+    layout[(2, 3)] = Cube(kind=CubeKind.SCISSORS, color=CubeColor.BLACK)
+
+    layout[(3, 0)] = Cube(kind=CubeKind.SCISSORS, color=CubeColor.WHITE)
+    layout[(3, 1)] = Cube(kind=CubeKind.SCISSORS, color=CubeColor.WHITE)
+    layout[(3, 2)] = Cube(kind=CubeKind.SCISSORS, color=CubeColor.WHITE)
+    layout[(3, 3)] = Cube(kind=CubeKind.SCISSORS, color=CubeColor.WHITE)
+
+    layout[(4, 0)] = Cube(kind=CubeKind.PAPER, color=CubeColor.WHITE)
+    layout[(4, 1)] = Cube(kind=CubeKind.PAPER, color=CubeColor.WHITE)
+    layout[(4, 2)] = Cube(kind=CubeKind.PAPER, color=CubeColor.WHITE)
+    layout[(4, 3)] = Cube(kind=CubeKind.PAPER, color=CubeColor.WHITE)
+
+    layout[(5, 0)] = Cube(kind=CubeKind.ROCK, color=CubeColor.WHITE)
+    layout[(5, 1)] = Cube(kind=CubeKind.ROCK, color=CubeColor.WHITE)
+    layout[(5, 2)] = Cube(kind=CubeKind.ROCK, color=CubeColor.WHITE)
+    layout[(5, 3)] = Cube(kind=CubeKind.ROCK, color=CubeColor.WHITE)
+
+    layout[(5, 4)] = Cube(kind=CubeKind.WISE, color=CubeColor.WHITE)
+    layout[(5, 5)] = Cube(kind=CubeKind.WISE, color=CubeColor.WHITE)
+
+    row_indices = list(set([row for (row, _) in layout.keys()]))
+    col_indices = list(set([col for (_, col) in layout.keys()]))
+
+    row_indices.sort()
+    col_indices.sort()
+
+    row_count = len(row_indices)
+    col_count = len(col_indices)
+
+    assert min(row_indices) == 0
+    assert max(row_indices) == (row_count - 1)
+
+    assert min(col_indices) == 0
+    assert max(col_indices) == (col_count - 1)
+
+    for row_index in range(row_count):
+        for col_index in range(col_count):
+            if (row_index, col_index) not in layout:
+                layout[(row_index, col_index)] = None
 
     # Compute the sizes in cm
 
-    hexagon_width_cm = 3
+    cube_side_cm = 1.6
+    # cube_margin_cm = 0.1/10
+    cube_margin_cm = 0.5
+    cube_shift_cm = cube_side_cm
+    cube_line_width_cm = 0.1/4
+    cube_decoration_width_cm = 0.1
+
+    support_width_cm = col_count * \
+        (cube_shift_cm + cube_margin_cm + cube_side_cm) + cube_shift_cm
+    support_height_cm = row_count * \
+        (cube_shift_cm + cube_margin_cm + cube_side_cm) + cube_shift_cm
+
+    # Deduce other sizes in pixels
+
+    support_width = 4096
+    support_height = support_width*(support_height_cm/support_width_cm)
+
+    cube_side = support_width*(cube_side_cm/support_width_cm)
+    cube_margin = support_width*(cube_margin_cm/support_width_cm)
+    cube_shift = support_width*(cube_shift_cm/support_width_cm)
+    cube_line_width = support_width*(cube_line_width_cm/support_width_cm)
+    cube_decoration_width = support_width * \
+        (cube_decoration_width_cm/support_width_cm)
+
+    # colors
+    support_color = '#BF9B7A'
+
+    # make and return the CubeConfig
+    cube_config = CubeConfig(cube_side_cm=cube_side_cm,
+
+                             layout=layout,
+                             row_count=row_count,
+                             col_count=col_count,
+
+                             support_width_cm=support_width_cm,
+                             support_height_cm=support_height_cm,
+                             support_color=support_color,
+
+                             support_width=support_width,
+                             support_height=support_height,
+
+                             cube_side=cube_side,
+                             cube_margin=cube_margin,
+                             cube_shift=cube_shift,
+                             cube_line_width=cube_line_width,
+                             cube_decoration_width=cube_decoration_width)
+
+    print()
+    print(f"make_cube_config: cube_side_cm = {cube_side_cm:.2f} ")
+    print(f"make_cube_config: cube_margin_cm = {cube_margin_cm:.2f}")
+    print(f"make_cube_config: cube_shift_cm = {cube_shift_cm:.2f}")
+
+    print()
+    print(f"make_cube_config: row_count = {row_count} ")
+    print(f"make_cube_config: row_count = {col_count} ")
+
+    print()
+    print(f"make_cube_config: support_width_cm = {support_width_cm:.2f} ")
+    print(f"make_cube_config: support_height_cm = {support_height_cm:.2f}")
+
+    print()
+    print("make_board_config: done")
+    return cube_config
+
+
+def make_board_config():
+
+    print()
+    print("make_board_config: ...")
+
+    # Compute the sizes in cm
+
+    hexagon_width_cm = 2*CUBE_CONFIG.cube_side_cm
     hexagon_side_cm = hexagon_width_cm/math.sqrt(3)
     hexagon_height_cm = 2*hexagon_side_cm
     hexagon_padding_cm = 0.3
@@ -265,51 +438,51 @@ def make_canvas_config():
     hexagon_line_width = max(
         1, board_width*(hexagon_line_width_cm/board_width_cm))
 
-    # make and return the CanvasConfig
-    canvas_config = CanvasConfig(board_width_cm=board_width_cm,
-                                 board_height_cm=board_height_cm,
+    # make and return the BoardConfig
+    board_config = BoardConfig(board_width_cm=board_width_cm,
+                               board_height_cm=board_height_cm,
 
-                                 board_width=board_width,
-                                 board_height=board_height,
+                               board_width=board_width,
+                               board_height=board_height,
 
-                                 board_color=board_color,
+                               board_color=board_color,
 
-                                 hexagon_width=hexagon_width,
-                                 hexagon_side=hexagon_side,
-                                 hexagon_height=hexagon_height,
-                                 hexagon_padding=hexagon_padding,
-                                 hexagon_line_width=hexagon_line_width,
-                                 hexagon_opacity=hexagon_opacity,
-                                 hexagon_line_color=hexagon_line_color,
+                               hexagon_width=hexagon_width,
+                               hexagon_side=hexagon_side,
+                               hexagon_height=hexagon_height,
+                               hexagon_padding=hexagon_padding,
+                               hexagon_line_width=hexagon_line_width,
+                               hexagon_opacity=hexagon_opacity,
+                               hexagon_line_color=hexagon_line_color,
 
-                                 hexagon_vertex_count=hexagon_vertex_count,
-                                 hexagon_side_angle=hexagon_side_angle,
+                               hexagon_vertex_count=hexagon_vertex_count,
+                               hexagon_side_angle=hexagon_side_angle,
 
-                                 origin=origin,
+                               origin=origin,
 
-                                 unit_x=unit_x,
-                                 unit_y=unit_y,
+                               unit_x=unit_x,
+                               unit_y=unit_y,
 
-                                 unit_u=unit_u,
-                                 unit_v=unit_v,
+                               unit_u=unit_u,
+                               unit_v=unit_v,
 
-                                 label_color=label_color,
-                                 label_vertical_shift=label_vertical_shift,
-                                 label_horizontal_shift=label_horizontal_shift,
-                                 label_font_family=label_font_family,
-                                 label_font_size=label_font_size)
-
-    print()
-    print(f"make_canvas_config: board_width_cm = {board_width_cm:.2f} ")
-    print(f"make_canvas_config: board_height_cm = {board_height_cm:.2f}")
-    print()
-    print(f"make_canvas_config: hexagon_width_cm = {hexagon_width_cm:.2f}")
-    print(f"make_canvas_config: hexagon_height_cm = {hexagon_height_cm:.2f}")
-    print(f"make_canvas_config: hexagon_side_cm = {hexagon_side_cm:.2f}")
+                               label_color=label_color,
+                               label_vertical_shift=label_vertical_shift,
+                               label_horizontal_shift=label_horizontal_shift,
+                               label_font_family=label_font_family,
+                               label_font_size=label_font_size)
 
     print()
-    print("make_canvas_config: done")
-    return canvas_config
+    print(f"make_board_config: board_width_cm = {board_width_cm:.2f} ")
+    print(f"make_board_config: board_height_cm = {board_height_cm:.2f}")
+    print()
+    print(f"make_board_config: hexagon_width_cm = {hexagon_width_cm:.2f}")
+    print(f"make_board_config: hexagon_height_cm = {hexagon_height_cm:.2f}")
+    print(f"make_board_config: hexagon_side_cm = {hexagon_side_cm:.2f}")
+
+    print()
+    print("make_board_config: done")
+    return board_config
 
 
 class Hexagon:
@@ -345,8 +518,8 @@ class Hexagon:
 
         (u, v) = self.position_uv
 
-        self.center = CANVAS_CONFIG.origin + CANVAS_CONFIG.hexagon_width * \
-            (u*CANVAS_CONFIG.unit_u + v*CANVAS_CONFIG.unit_v)
+        self.center = BOARD_CONFIG.origin + BOARD_CONFIG.hexagon_width * \
+            (u*BOARD_CONFIG.unit_u + v*BOARD_CONFIG.unit_v)
 
     def __str__(self):
         return f"Hexagon({self.name}, {self.position_uv}, {self.index}"
@@ -489,15 +662,15 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
         file_name += '_with_decoration'
 
     # Define the board
-    board = draw.Drawing(width=CANVAS_CONFIG.board_width, height=CANVAS_CONFIG.board_height,
-                         origin=(-CANVAS_CONFIG.board_width/2, -CANVAS_CONFIG.board_height/2))
+    board = draw.Drawing(width=BOARD_CONFIG.board_width, height=BOARD_CONFIG.board_height,
+                         origin=(-BOARD_CONFIG.board_width/2, -BOARD_CONFIG.board_height/2))
     board.set_render_size(
-        w=f"{CANVAS_CONFIG.board_width_cm}cm", h=f"{CANVAS_CONFIG.board_height_cm}cm")
+        w=f"{BOARD_CONFIG.board_width_cm}cm", h=f"{BOARD_CONFIG.board_height_cm}cm")
 
     # Draw the outer rectangle
-    outer = draw.Rectangle(x=-CANVAS_CONFIG.board_width/2, y=-CANVAS_CONFIG.board_height/2,
-                           width=CANVAS_CONFIG.board_width, height=CANVAS_CONFIG.board_height,
-                           fill=CANVAS_CONFIG.board_color)
+    outer = draw.Rectangle(x=-BOARD_CONFIG.board_width/2, y=-BOARD_CONFIG.board_height/2,
+                           width=BOARD_CONFIG.board_width, height=BOARD_CONFIG.board_height,
+                           fill=BOARD_CONFIG.board_color)
 
     board.append(outer)
 
@@ -508,37 +681,41 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
         hexagon_vertex_data = []
         hexagon_vertices = []
 
-        hexagon_scale = 1 - CANVAS_CONFIG.hexagon_padding/CANVAS_CONFIG.hexagon_width
+        hexagon_scale = 1 - BOARD_CONFIG.hexagon_padding/BOARD_CONFIG.hexagon_width
 
-        for vertex_index in range(CANVAS_CONFIG.hexagon_vertex_count):
+        for vertex_index in range(BOARD_CONFIG.hexagon_vertex_count):
             vertex_angle = (1/2 + vertex_index) * \
-                CANVAS_CONFIG.hexagon_side_angle
+                BOARD_CONFIG.hexagon_side_angle
 
             hexagon_vertex = abstract_hexagon.center
 
-            hexagon_vertex = hexagon_vertex + hexagon_scale*CANVAS_CONFIG.hexagon_side * \
-                math.cos(vertex_angle)*CANVAS_CONFIG.unit_x
+            hexagon_vertex = hexagon_vertex + hexagon_scale*BOARD_CONFIG.hexagon_side * \
+                math.cos(vertex_angle)*BOARD_CONFIG.unit_x
 
-            hexagon_vertex = hexagon_vertex + hexagon_scale*CANVAS_CONFIG.hexagon_side * \
-                math.sin(vertex_angle)*CANVAS_CONFIG.unit_y
+            hexagon_vertex = hexagon_vertex + hexagon_scale*BOARD_CONFIG.hexagon_side * \
+                math.sin(vertex_angle)*BOARD_CONFIG.unit_y
 
             hexagon_vertices.append(hexagon_vertex)
 
             hexagon_vertex_data.append(hexagon_vertex[0])
             hexagon_vertex_data.append(hexagon_vertex[1])
-        
-        hexagon_opacity = CANVAS_CONFIG.hexagon_opacity*(1 if abstract_hexagon.ring % 2 == 0 else 0.5)   
-        
-        hexagon_gradient = draw.RadialGradient(cx=abstract_hexagon.center[0], cy=abstract_hexagon.center[1], r=hexagon_scale*CANVAS_CONFIG.hexagon_side)
-        hexagon_gradient.add_stop(offset=0, color='black', opacity=hexagon_opacity*0.00)
-        hexagon_gradient.add_stop(offset=1, color='black', opacity=hexagon_opacity*1.00)
+
+        hexagon_opacity = BOARD_CONFIG.hexagon_opacity * \
+            (1 if abstract_hexagon.ring % 2 == 0 else 0.5)
+
+        hexagon_gradient = draw.RadialGradient(
+            cx=abstract_hexagon.center[0], cy=abstract_hexagon.center[1], r=hexagon_scale*BOARD_CONFIG.hexagon_side)
+        hexagon_gradient.add_stop(
+            offset=0, color='black', opacity=hexagon_opacity*0.00)
+        hexagon_gradient.add_stop(
+            offset=1, color='black', opacity=hexagon_opacity*1.00)
 
         hexagon = draw.Lines(*hexagon_vertex_data,
                              fill=hexagon_gradient,
                              # fill=None,
                              # fill_opacity=hexagon_opacity,
-                             stroke=CANVAS_CONFIG.hexagon_line_color,
-                             stroke_width=CANVAS_CONFIG.hexagon_line_width,
+                             stroke=BOARD_CONFIG.hexagon_line_color,
+                             stroke_width=BOARD_CONFIG.hexagon_line_width,
                              close=True)
         board.append(hexagon)
 
@@ -570,10 +747,10 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
                     segment_data.append(segment_edge[1])
 
                 segment = draw.Line(*segment_data,
-                                     fill=None,
-                                     fill_opacity=0,
-                                     stroke=CANVAS_CONFIG.hexagon_line_color,
-                                     stroke_width=CANVAS_CONFIG.hexagon_line_width)
+                                    fill=None,
+                                    fill_opacity=0,
+                                    stroke=BOARD_CONFIG.hexagon_line_color,
+                                    stroke_width=BOARD_CONFIG.hexagon_line_width)
 
                 board.append(segment)
 
@@ -592,11 +769,11 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
 
                 decorater_polygon_vertex = abstract_hexagon.center
 
-                decorater_polygon_vertex = decorater_polygon_vertex + decorater_polygon_scale*CANVAS_CONFIG.hexagon_side * \
-                    math.cos(vertex_angle)*CANVAS_CONFIG.unit_x
+                decorater_polygon_vertex = decorater_polygon_vertex + decorater_polygon_scale*BOARD_CONFIG.hexagon_side * \
+                    math.cos(vertex_angle)*BOARD_CONFIG.unit_x
 
-                decorater_polygon_vertex = decorater_polygon_vertex + decorater_polygon_scale*CANVAS_CONFIG.hexagon_side * \
-                    math.sin(vertex_angle)*CANVAS_CONFIG.unit_y
+                decorater_polygon_vertex = decorater_polygon_vertex + decorater_polygon_scale*BOARD_CONFIG.hexagon_side * \
+                    math.sin(vertex_angle)*BOARD_CONFIG.unit_y
 
                 decorater_polygon_vertex_data.append(
                     decorater_polygon_vertex[0])
@@ -608,8 +785,8 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
             decorater_polygon = draw.Lines(*decorater_polygon_vertex_data,
                                            fill=None,
                                            fill_opacity=0,
-                                           stroke=CANVAS_CONFIG.hexagon_line_color,
-                                           stroke_width=CANVAS_CONFIG.hexagon_line_width,
+                                           stroke=BOARD_CONFIG.hexagon_line_color,
+                                           stroke_width=BOARD_CONFIG.hexagon_line_width,
                                            close=True)
             board.append(decorater_polygon)
 
@@ -641,8 +818,8 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
                 rotating_polygon = draw.Lines(*rotating_polygon_vertex_data,
                                               fill=None,
                                               fill_opacity=0,
-                                              stroke=CANVAS_CONFIG.hexagon_line_color,
-                                              stroke_width=CANVAS_CONFIG.hexagon_line_width,
+                                              stroke=BOARD_CONFIG.hexagon_line_color,
+                                              stroke_width=BOARD_CONFIG.hexagon_line_width,
                                               close=True)
                 board.append(rotating_polygon)
 
@@ -650,27 +827,27 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
             label_location = None
 
         elif with_all_labels:
-            label_location = abstract_hexagon.center + CANVAS_CONFIG.label_vertical_shift
+            label_location = abstract_hexagon.center + BOARD_CONFIG.label_vertical_shift
 
         else:
             if abstract_hexagon.label_side is not None:
                 if abstract_hexagon.label_side == Side.WEST:
-                    label_location = abstract_hexagon.center - CANVAS_CONFIG.label_horizontal_shift
+                    label_location = abstract_hexagon.center - BOARD_CONFIG.label_horizontal_shift
 
                 elif abstract_hexagon.label_side == Side.EAST:
-                    label_location = abstract_hexagon.center + CANVAS_CONFIG.label_horizontal_shift
+                    label_location = abstract_hexagon.center + BOARD_CONFIG.label_horizontal_shift
 
                 else:
                     label_location = None
 
         if label_location is not None:
             board.append(draw.Text(text=abstract_hexagon.name,
-                                   font_size=CANVAS_CONFIG.label_font_size,
-                                   font_family=CANVAS_CONFIG.label_font_family,
+                                   font_size=BOARD_CONFIG.label_font_size,
+                                   font_family=BOARD_CONFIG.label_font_family,
                                    x=label_location[0],
                                    y=label_location[1],
                                    center=True,
-                                   fill=CANVAS_CONFIG.label_color))
+                                   fill=BOARD_CONFIG.label_color))
 
     print()
     print("draw_board: save as SVG ...")
@@ -686,15 +863,81 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
     print("draw_board: done")
 
 
+def draw_cubes():
+
+    print()
+    print("draw_cubes: ...")
+
+    file_name = 'pijersi_cubes'
+
+    # Define the support
+    support = draw.Drawing(width=CUBE_CONFIG.support_width,
+                           height=CUBE_CONFIG.support_height, origin=(0, 0))
+    support.set_render_size(
+        w=f"{CUBE_CONFIG.support_width_cm}cm", h=f"{CUBE_CONFIG.support_height_cm}cm")
+
+    # Draw the outer rectangle
+    outer = draw.Rectangle(x=0, y=0, width=CUBE_CONFIG.support_width, height=CUBE_CONFIG.support_height,
+                           fill=CUBE_CONFIG.support_color)
+
+    support.append(outer)
+
+    # Draw the cubes
+
+    for row_index in range(CUBE_CONFIG.row_count):
+        for col_index in range(CUBE_CONFIG.col_count):
+            abstract_cube = CUBE_CONFIG.layout[(row_index, col_index)]
+            if abstract_cube is not None:
+
+                cube_x = CUBE_CONFIG.cube_shift + col_index * \
+                    (CUBE_CONFIG.cube_margin +
+                     CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_shift)
+
+                cube_y = CUBE_CONFIG.cube_shift + row_index * \
+                    (CUBE_CONFIG.cube_margin +
+                     CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_shift)
+
+                cube = draw.Rectangle(x=cube_x, y=cube_y,
+                                      width=CUBE_CONFIG.cube_side,
+                                      height=CUBE_CONFIG.cube_side,
+                                      fill='black' if abstract_cube.color == CubeColor.BLACK else 'white')
+
+                outer_cube = draw.Rectangle(x=cube_x - CUBE_CONFIG.cube_margin/2,
+                                            y=cube_y - CUBE_CONFIG.cube_margin/2,
+                                            width=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_margin,
+                                            height=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_margin,
+                                            fill='green')
+                support.append(outer_cube)
+                support.append(cube)
+
+    print()
+    print("draw_cubes: save as SVG ...")
+    support.save_svg(os.path.join(_pictures_dir, f"{file_name}.svg"))
+    print("draw_cubes: save as SVG done")
+
+    print()
+    print("draw_cubes: save as PNG ...")
+    support.save_png(os.path.join(_pictures_dir, f"{file_name}.png"))
+    print("draw_cubes: save as PNG done")
+
+    print()
+    print("draw_cubes: done")
+
+
 def main():
-    draw_board(with_all_labels=True)
-    draw_board(without_labels=True)
-    draw_board(with_all_labels=False)
-    draw_board(with_all_labels=False, with_decoration=True)
-    draw_board(without_labels=True, with_decoration=True)
+    if False:
+        draw_board(with_all_labels=True)
+        draw_board(without_labels=True)
+        draw_board(with_all_labels=False)
+        draw_board(with_all_labels=False, with_decoration=True)
+        draw_board(without_labels=True, with_decoration=True)
+
+    if True:
+        draw_cubes()
 
 
-CANVAS_CONFIG = make_canvas_config()
+CUBE_CONFIG = make_cube_config()
+BOARD_CONFIG = make_board_config()
 Hexagon.init()
 
 if __name__ == "__main__":
