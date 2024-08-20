@@ -193,7 +193,7 @@ class CubeConfig:
     cube_margin: float = None
     cube_shift: float = None
     cube_line_width: float = None
-    
+
     decoration_line_width: float = None
     decoration_side: float = None
 
@@ -303,16 +303,16 @@ def make_cube_config():
     # Compute the sizes in cm
 
     cube_side_cm = 1.6
-    # cube_margin_cm = 0.1/10
-    cube_margin_cm = 0.5
+    cube_margin_cm = 0.1/10
     cube_shift_cm = cube_side_cm
     cube_line_width_cm = 0.1/4
-    
-    decoration_line_width_cm = 0.2
+
+    decoration_line_width_cm = 0.15
     decoration_side_cm = 0.5*cube_side_cm
 
     support_width_cm = col_count * \
         (cube_shift_cm + cube_margin_cm + cube_side_cm) + cube_shift_cm
+
     support_height_cm = row_count * \
         (cube_shift_cm + cube_margin_cm + cube_side_cm) + cube_shift_cm
 
@@ -322,16 +322,18 @@ def make_cube_config():
     support_height = support_width*(support_height_cm/support_width_cm)
 
     cube_side = support_width*(cube_side_cm/support_width_cm)
-    
+
     cube_margin = support_width*(cube_margin_cm/support_width_cm)
-    
+
     cube_shift = support_width*(cube_shift_cm/support_width_cm)
-    
+
     cube_line_width = support_width*(cube_line_width_cm/support_width_cm)
-    
+    cube_line_width = max(1, cube_line_width)
+
     decoration_line_width = support_width * \
         (decoration_line_width_cm/support_width_cm)
-    
+    decoration_line_width = max(1, decoration_line_width)
+
     decoration_side = support_width * \
         (decoration_side_cm/support_width_cm)
 
@@ -356,7 +358,7 @@ def make_cube_config():
                              cube_margin=cube_margin,
                              cube_shift=cube_shift,
                              cube_line_width=cube_line_width,
-                             
+
                              decoration_line_width=decoration_line_width,
                              decoration_side=decoration_side)
 
@@ -448,8 +450,8 @@ def make_board_config():
     hexagon_opacity = 0.45
     hexagon_line_color = 'black'
 
-    hexagon_line_width = max(
-        1, board_width*(hexagon_line_width_cm/board_width_cm))
+    hexagon_line_width = board_width*(hexagon_line_width_cm/board_width_cm)
+    hexagon_line_width = max(1, hexagon_line_width)
 
     # make and return the BoardConfig
     board_config = BoardConfig(board_width_cm=board_width_cm,
@@ -939,18 +941,114 @@ def draw_cube(support, abstract_cube, cube_x, cube_y):
                           width=CUBE_CONFIG.cube_side,
                           height=CUBE_CONFIG.cube_side,
                           fill='black' if abstract_cube.color == CubeColor.BLACK else 'white')
-    
+    support.append(cube)
+
+    if abstract_cube.kind == CubeKind.ROCK:
+        draw_rock(support, abstract_cube, cube_x, cube_y)
+
+    elif abstract_cube.kind == CubeKind.PAPER:
+        draw_paper(support, abstract_cube, cube_x, cube_y)
+
+    elif abstract_cube.kind == CubeKind.SCISSORS:
+        draw_scissors(support, abstract_cube, cube_x, cube_y)
+
+    elif abstract_cube.kind == CubeKind.WISE:
+        draw_wise(support, abstract_cube, cube_x, cube_y)
+
+
+def draw_rock(support, abstract_cube, cube_x, cube_y):
     center_x = cube_x + CUBE_CONFIG.cube_side/2
     center_y = cube_y + CUBE_CONFIG.cube_side/2
-    
-    circle = draw.Circle(cx=center_x, cy=center_y, r=CUBE_CONFIG.decoration_side/2, 
+
+    circle = draw.Circle(cx=center_x, cy=center_y, r=CUBE_CONFIG.decoration_side/2,
                          fill=None,
                          fill_opacity=0,
                          stroke='white' if abstract_cube.color == CubeColor.BLACK else 'black',
-                         stroke_width=CUBE_CONFIG.decoration_line_width,                         )
-    
-    support.append(cube)
+                         stroke_width=CUBE_CONFIG.decoration_line_width)
+
     support.append(circle)
+
+
+def draw_paper(support, abstract_cube, cube_x, cube_y):
+    paper_x = cube_x + CUBE_CONFIG.decoration_side/2
+    paper_y = cube_y + CUBE_CONFIG.decoration_side/2
+
+    paper = draw.Rectangle(x=paper_x, y=paper_y,
+                           width=CUBE_CONFIG.decoration_side,
+                           height=CUBE_CONFIG.decoration_side,
+                           fill=None,
+                           fill_opacity=0,
+                           stroke='white' if abstract_cube.color == CubeColor.BLACK else 'black',
+                           stroke_width=CUBE_CONFIG.decoration_line_width)
+
+    support.append(paper)
+
+
+def draw_scissors(support, abstract_cube, cube_x, cube_y):
+    for segment_index in range(2):
+
+        segment_data = []
+
+        if segment_index == 0:
+            segment_data.append(cube_x + CUBE_CONFIG.decoration_side/2)
+            segment_data.append(cube_y + CUBE_CONFIG.decoration_side/2)
+
+            segment_data.append(cube_x + CUBE_CONFIG.decoration_side*3/2)
+            segment_data.append(cube_y + CUBE_CONFIG.decoration_side*3/2)
+
+        elif segment_index == 1:
+            segment_data.append(cube_x + CUBE_CONFIG.decoration_side*3/2)
+            segment_data.append(cube_y + CUBE_CONFIG.decoration_side/2)
+
+            segment_data.append(cube_x + CUBE_CONFIG.decoration_side/2)
+            segment_data.append(cube_y + CUBE_CONFIG.decoration_side*3/2)
+
+        segment = draw.Line(*segment_data,
+                            fill=None,
+                            fill_opacity=0,
+                            stroke='white' if abstract_cube.color == CubeColor.BLACK else 'black',
+                            stroke_width=CUBE_CONFIG.decoration_line_width)
+
+        support.append(segment)
+
+
+def draw_wise(support, abstract_cube, cube_x, cube_y):
+    center_x = cube_x + CUBE_CONFIG.cube_side/2
+    center_y = cube_y + CUBE_CONFIG.cube_side/2
+
+    west_x = center_x - CUBE_CONFIG.decoration_side/2
+
+    wise_data = list()
+
+    # -- Equation retrieve from my GeoGebra drawings --
+    # Curve(x(C) + (x(C) - x(W)) cos(t) / (1 + sin²(t)),
+    #        y(C) + (x(C) - x(W)) cos(t) sin(t) / (1 + sin²(t)),
+    #        t, 0, 2π)
+    # C : cube_center
+    # W : west_x
+
+    delta = center_x - west_x
+
+    angle_count = 100
+    for angle_index in range(angle_count):
+        angle_value = angle_index*2*math.pi/angle_count
+
+        angle_sinus = math.sin(angle_value)
+        angle_cosinus = math.cos(angle_value)
+
+        x = center_x + delta*angle_cosinus/(1 + angle_sinus**2)
+        y = center_y + delta*angle_cosinus*angle_sinus/(1 + angle_sinus**2)
+
+        wise_data.append(x)
+        wise_data.append(y)
+
+    wise = draw.Lines(*wise_data,
+                      fill=None,
+                      fill_opacity=0,
+                      stroke='white' if abstract_cube.color == CubeColor.BLACK else 'black',
+                      stroke_width=CUBE_CONFIG.decoration_line_width,
+                      close=True)
+    support.append(wise)
 
 
 def main():
