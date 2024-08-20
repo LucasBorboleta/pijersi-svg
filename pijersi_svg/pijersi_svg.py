@@ -979,7 +979,8 @@ def draw_paper(support, abstract_cube, cube_x, cube_y):
                            fill=None,
                            fill_opacity=0,
                            stroke='white' if abstract_cube.color == CubeColor.BLACK else 'black',
-                           stroke_width=CUBE_CONFIG.decoration_line_width)
+                           stroke_width=CUBE_CONFIG.decoration_line_width,
+                           stroke_linejoin='miter')
 
     support.append(paper)
 
@@ -1007,7 +1008,8 @@ def draw_scissors(support, abstract_cube, cube_x, cube_y):
                             fill=None,
                             fill_opacity=0,
                             stroke='white' if abstract_cube.color == CubeColor.BLACK else 'black',
-                            stroke_width=CUBE_CONFIG.decoration_line_width)
+                            stroke_width=CUBE_CONFIG.decoration_line_width,
+                            stroke_linecap='butt')
 
         support.append(segment)
 
@@ -1016,18 +1018,10 @@ def draw_wise(support, abstract_cube, cube_x, cube_y):
     center_x = cube_x + CUBE_CONFIG.cube_side/2
     center_y = cube_y + CUBE_CONFIG.cube_side/2
 
-    west_x = center_x - CUBE_CONFIG.decoration_side/2
-
     wise_data = list()
 
-    # -- Equation retrieve from my GeoGebra drawings --
-    # Curve(x(C) + (x(C) - x(W)) cos(t) / (1 + sin²(t)),
-    #        y(C) + (x(C) - x(W)) cos(t) sin(t) / (1 + sin²(t)),
-    #        t, 0, 2π)
-    # C : cube_center
-    # W : west_x
-
-    delta = center_x - west_x
+    delta_x = CUBE_CONFIG.decoration_side/2
+    delta_y = CUBE_CONFIG.decoration_side
 
     angle_count = 100
     for angle_index in range(angle_count):
@@ -1036,8 +1030,8 @@ def draw_wise(support, abstract_cube, cube_x, cube_y):
         angle_sinus = math.sin(angle_value)
         angle_cosinus = math.cos(angle_value)
 
-        x = center_x + delta*angle_cosinus/(1 + angle_sinus**2)
-        y = center_y + delta*angle_cosinus*angle_sinus/(1 + angle_sinus**2)
+        x = center_x + delta_x*angle_cosinus/(1 + angle_sinus**2)
+        y = center_y + delta_y*angle_cosinus*angle_sinus/(1 + angle_sinus**2)
 
         wise_data.append(x)
         wise_data.append(y)
@@ -1052,7 +1046,7 @@ def draw_wise(support, abstract_cube, cube_x, cube_y):
 
 
 def main():
-    if False:
+    if True:
         draw_board(with_all_labels=True)
         draw_board(without_labels=True)
         draw_board(with_all_labels=False)
