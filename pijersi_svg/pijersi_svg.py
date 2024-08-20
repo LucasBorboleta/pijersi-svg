@@ -193,7 +193,9 @@ class CubeConfig:
     cube_margin: float = None
     cube_shift: float = None
     cube_line_width: float = None
-    cube_decoration_width: float = None
+    
+    decoration_line_width: float = None
+    decoration_side: float = None
 
 
 @dataclass
@@ -305,7 +307,9 @@ def make_cube_config():
     cube_margin_cm = 0.5
     cube_shift_cm = cube_side_cm
     cube_line_width_cm = 0.1/4
-    cube_decoration_width_cm = 0.1
+    
+    decoration_line_width_cm = 0.2
+    decoration_side_cm = 0.5*cube_side_cm
 
     support_width_cm = col_count * \
         (cube_shift_cm + cube_margin_cm + cube_side_cm) + cube_shift_cm
@@ -318,11 +322,18 @@ def make_cube_config():
     support_height = support_width*(support_height_cm/support_width_cm)
 
     cube_side = support_width*(cube_side_cm/support_width_cm)
+    
     cube_margin = support_width*(cube_margin_cm/support_width_cm)
+    
     cube_shift = support_width*(cube_shift_cm/support_width_cm)
+    
     cube_line_width = support_width*(cube_line_width_cm/support_width_cm)
-    cube_decoration_width = support_width * \
-        (cube_decoration_width_cm/support_width_cm)
+    
+    decoration_line_width = support_width * \
+        (decoration_line_width_cm/support_width_cm)
+    
+    decoration_side = support_width * \
+        (decoration_side_cm/support_width_cm)
 
     # colors
     support_color = '#BF9B7A'
@@ -345,7 +356,9 @@ def make_cube_config():
                              cube_margin=cube_margin,
                              cube_shift=cube_shift,
                              cube_line_width=cube_line_width,
-                             cube_decoration_width=cube_decoration_width)
+                             
+                             decoration_line_width=decoration_line_width,
+                             decoration_side=decoration_side)
 
     print()
     print(f"make_cube_config: cube_side_cm = {cube_side_cm:.2f} ")
@@ -926,7 +939,18 @@ def draw_cube(support, abstract_cube, cube_x, cube_y):
                           width=CUBE_CONFIG.cube_side,
                           height=CUBE_CONFIG.cube_side,
                           fill='black' if abstract_cube.color == CubeColor.BLACK else 'white')
+    
+    center_x = cube_x + CUBE_CONFIG.cube_side/2
+    center_y = cube_y + CUBE_CONFIG.cube_side/2
+    
+    circle = draw.Circle(cx=center_x, cy=center_y, r=CUBE_CONFIG.decoration_side/2, 
+                         fill=None,
+                         fill_opacity=0,
+                         stroke='white' if abstract_cube.color == CubeColor.BLACK else 'black',
+                         stroke_width=CUBE_CONFIG.decoration_line_width,                         )
+    
     support.append(cube)
+    support.append(circle)
 
 
 def main():
