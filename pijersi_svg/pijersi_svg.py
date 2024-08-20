@@ -863,10 +863,10 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
     print("draw_board: done")
 
 
-def draw_cubes():
+def draw_cubes_and_support():
 
     print()
-    print("draw_cubes: ...")
+    print("draw_cubes_and_support: ...")
 
     file_name = 'pijersi_cubes'
 
@@ -897,31 +897,36 @@ def draw_cubes():
                     (CUBE_CONFIG.cube_margin +
                      CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_shift)
 
-                cube = draw.Rectangle(x=cube_x, y=cube_y,
-                                      width=CUBE_CONFIG.cube_side,
-                                      height=CUBE_CONFIG.cube_side,
-                                      fill='black' if abstract_cube.color == CubeColor.BLACK else 'white')
-
                 outer_cube = draw.Rectangle(x=cube_x - CUBE_CONFIG.cube_margin/2,
                                             y=cube_y - CUBE_CONFIG.cube_margin/2,
                                             width=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_margin,
                                             height=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_margin,
                                             fill='green')
                 support.append(outer_cube)
-                support.append(cube)
+
+                draw_cube(support, abstract_cube, cube_x, cube_y)
 
     print()
-    print("draw_cubes: save as SVG ...")
+    print("draw_cubes_and_support: save as SVG ...")
     support.save_svg(os.path.join(_pictures_dir, f"{file_name}.svg"))
-    print("draw_cubes: save as SVG done")
+    print("draw_cubes_and_support: save as SVG done")
 
     print()
-    print("draw_cubes: save as PNG ...")
+    print("draw_cubes_and_support: save as PNG ...")
     support.save_png(os.path.join(_pictures_dir, f"{file_name}.png"))
-    print("draw_cubes: save as PNG done")
+    print("draw_cubes_and_support: save as PNG done")
 
     print()
-    print("draw_cubes: done")
+    print("draw_cubes_and_support: done")
+
+
+def draw_cube(support, abstract_cube, cube_x, cube_y):
+
+    cube = draw.Rectangle(x=cube_x, y=cube_y,
+                          width=CUBE_CONFIG.cube_side,
+                          height=CUBE_CONFIG.cube_side,
+                          fill='black' if abstract_cube.color == CubeColor.BLACK else 'white')
+    support.append(cube)
 
 
 def main():
@@ -933,7 +938,7 @@ def main():
         draw_board(without_labels=True, with_decoration=True)
 
     if True:
-        draw_cubes()
+        draw_cubes_and_support()
 
 
 CUBE_CONFIG = make_cube_config()
