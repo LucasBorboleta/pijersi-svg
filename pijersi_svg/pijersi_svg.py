@@ -691,7 +691,7 @@ class Hexagon:
         Hexagon('g6', (1, 3), ring=0, label_side=Side.EAST)
 
 
-def draw_board(with_all_labels=False, without_labels=False, with_decoration=False):
+def draw_board(with_all_labels=False, without_labels=False, with_decoration=False, do_rendering=True):
     print()
     print("draw_board: ...")
 
@@ -707,6 +707,9 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
     if with_decoration:
         file_name += '_with_decoration'
 
+    if not do_rendering:
+        file_name = file_name.replace('pijersi_', 'pijersi_laser_')
+
     # Define the board
     board = draw.Drawing(width=BOARD_CONFIG.board_width, height=BOARD_CONFIG.board_height,
                          origin=(-BOARD_CONFIG.board_width/2, -BOARD_CONFIG.board_height/2))
@@ -714,13 +717,21 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
         w=f"{BOARD_CONFIG.board_width_cm}cm", h=f"{BOARD_CONFIG.board_height_cm}cm")
 
     # Draw the outer rectangle
-    outer = draw.Rectangle(x=-BOARD_CONFIG.board_width/2 + BOARD_CONFIG.board_cut_margin,
-                           y=-BOARD_CONFIG.board_height/2 + BOARD_CONFIG.board_cut_margin,
-                           width=BOARD_CONFIG.board_width - 2*BOARD_CONFIG.board_cut_margin,
-                           height=BOARD_CONFIG.board_height - 2*BOARD_CONFIG.board_cut_margin,
-                           fill=BOARD_CONFIG.board_color,
-                           stroke=COLOR_TO_CUT_1,
-                           stroke_width=LINE_WIDTH_TO_CUT)
+    if do_rendering:
+        outer = draw.Rectangle(x=-BOARD_CONFIG.board_width/2,
+                               y=-BOARD_CONFIG.board_height/2,
+                               width=BOARD_CONFIG.board_width,
+                               height=BOARD_CONFIG.board_height,
+                               fill=BOARD_CONFIG.board_color)
+
+    else:
+        outer = draw.Rectangle(x=-BOARD_CONFIG.board_width/2 + BOARD_CONFIG.board_cut_margin,
+                               y=-BOARD_CONFIG.board_height/2 + BOARD_CONFIG.board_cut_margin,
+                               width=BOARD_CONFIG.board_width - 2*BOARD_CONFIG.board_cut_margin,
+                               height=BOARD_CONFIG.board_height - 2*BOARD_CONFIG.board_cut_margin,
+                               fill='white',
+                               stroke=COLOR_TO_CUT_1,
+                               stroke_width=LINE_WIDTH_TO_CUT)
 
     board.append(outer)
 
@@ -913,12 +924,23 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
     print("draw_board: done")
 
 
-def draw_cubes_and_support():
+def draw_cubes_and_support(do_rendering=True, draw_support=True, draw_decorations=True):
 
     print()
     print("draw_cubes_and_support: ...")
 
-    file_name = 'pijersi_cubes'
+    if not do_rendering:
+        assert draw_support != draw_decorations
+
+    if do_rendering:
+        file_name = 'pijersi_cubes'
+
+    else:
+        if draw_support:
+            file_name = 'pijersi_laser_cubes_support'
+
+        elif draw_decorations:
+            file_name = 'pijersi_laser_cubes_decorations'
 
     # Define the support
     support = draw.Drawing(width=CUBE_CONFIG.support_width,
@@ -927,12 +949,26 @@ def draw_cubes_and_support():
         w=f"{CUBE_CONFIG.support_width_cm}cm", h=f"{CUBE_CONFIG.support_height_cm}cm")
 
     # Draw the outer rectangle
-    outer = draw.Rectangle(x=CUBE_CONFIG.support_cut_margin, y=CUBE_CONFIG.support_cut_margin,
-                           width=CUBE_CONFIG.support_width - 2*CUBE_CONFIG.support_cut_margin,
-                           height=CUBE_CONFIG.support_height - 2*CUBE_CONFIG.support_cut_margin,
-                           fill=CUBE_CONFIG.support_color,
-                           stroke=COLOR_TO_CUT_2,
-                           stroke_width=LINE_WIDTH_TO_CUT)
+    if do_rendering:
+        outer = draw.Rectangle(x=0, y=0,
+                               width=CUBE_CONFIG.support_width,
+                               height=CUBE_CONFIG.support_height,
+                               fill=CUBE_CONFIG.support_color)
+
+    else:
+        if draw_support:
+            outer = draw.Rectangle(x=CUBE_CONFIG.support_cut_margin, y=CUBE_CONFIG.support_cut_margin,
+                                   width=CUBE_CONFIG.support_width - 2*CUBE_CONFIG.support_cut_margin,
+                                   height=CUBE_CONFIG.support_height - 2*CUBE_CONFIG.support_cut_margin,
+                                   fill='white',
+                                   stroke=COLOR_TO_CUT_2,
+                                   stroke_width=LINE_WIDTH_TO_CUT)
+        elif draw_decorations:
+            outer = draw.Rectangle(x=0, y=0,
+                                   width=CUBE_CONFIG.support_width,
+                                   height=CUBE_CONFIG.support_height,
+                                   fill='white',
+                                   stroke='black')
 
     support.append(outer)
 
@@ -951,16 +987,18 @@ def draw_cubes_and_support():
                     (CUBE_CONFIG.cube_cut_margin +
                      CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_shift)
 
-                outer_cube = draw.Rectangle(x=cube_x - CUBE_CONFIG.cube_cut_margin/2,
-                                            y=cube_y - CUBE_CONFIG.cube_cut_margin/2,
-                                            width=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_cut_margin,
-                                            height=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_cut_margin,
-                                            fill=None,
-                                            stroke=COLOR_TO_CUT_1,
-                                            stroke_width=LINE_WIDTH_TO_CUT)
-                support.append(outer_cube)
+                if (not do_rendering) and draw_support:
+                    outer_cube = draw.Rectangle(x=cube_x - CUBE_CONFIG.cube_cut_margin/2,
+                                                y=cube_y - CUBE_CONFIG.cube_cut_margin/2,
+                                                width=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_cut_margin,
+                                                height=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_cut_margin,
+                                                fill='white',
+                                                stroke=COLOR_TO_CUT_1,
+                                                stroke_width=LINE_WIDTH_TO_CUT)
+                    support.append(outer_cube)
 
-                draw_cube(support, abstract_cube, cube_x, cube_y)
+                draw_cube(support, abstract_cube, cube_x,
+                          cube_y, do_rendering, draw_decorations)
 
     print()
     print("draw_cubes_and_support: save as SVG ...")
@@ -976,41 +1014,46 @@ def draw_cubes_and_support():
     print("draw_cubes_and_support: done")
 
 
-def draw_cube(support, abstract_cube, cube_x, cube_y):
+def draw_cube(support, abstract_cube, cube_x, cube_y, do_rendering=True, draw_decorations=True):
 
-    cube = draw.Rectangle(x=cube_x, y=cube_y,
-                          width=CUBE_CONFIG.cube_side,
-                          height=CUBE_CONFIG.cube_side,
-                          fill='black' if abstract_cube.color == CubeColor.BLACK else 'white')
-    support.append(cube)
+    if do_rendering:
+        cube = draw.Rectangle(x=cube_x, y=cube_y,
+                              width=CUBE_CONFIG.cube_side,
+                              height=CUBE_CONFIG.cube_side,
+                              fill='black' if abstract_cube.color == CubeColor.BLACK else 'white')
+        support.append(cube)
 
-    if abstract_cube.kind == CubeKind.ROCK:
-        draw_rock(support, abstract_cube, cube_x, cube_y)
+    if do_rendering or draw_decorations:
 
-    elif abstract_cube.kind == CubeKind.PAPER:
-        draw_paper(support, abstract_cube, cube_x, cube_y)
+        if abstract_cube.kind == CubeKind.ROCK:
+            draw_rock(support, abstract_cube, cube_x, cube_y, do_rendering)
 
-    elif abstract_cube.kind == CubeKind.SCISSORS:
-        draw_scissors(support, abstract_cube, cube_x, cube_y)
+        elif abstract_cube.kind == CubeKind.PAPER:
+            draw_paper(support, abstract_cube, cube_x, cube_y, do_rendering)
 
-    elif abstract_cube.kind == CubeKind.WISE:
-        draw_wise(support, abstract_cube, cube_x, cube_y)
+        elif abstract_cube.kind == CubeKind.SCISSORS:
+            draw_scissors(support, abstract_cube, cube_x, cube_y, do_rendering)
+
+        elif abstract_cube.kind == CubeKind.WISE:
+            draw_wise(support, abstract_cube, cube_x, cube_y, do_rendering)
 
 
-def draw_rock(support, abstract_cube, cube_x, cube_y):
+def draw_rock(support, abstract_cube, cube_x, cube_y, do_rendering=True):
+
     center_x = cube_x + CUBE_CONFIG.cube_side/2
     center_y = cube_y + CUBE_CONFIG.cube_side/2
 
     circle = draw.Circle(cx=center_x, cy=center_y, r=CUBE_CONFIG.decoration_side/2,
                          fill=None,
                          fill_opacity=0,
-                         stroke='white' if abstract_cube.color == CubeColor.BLACK else 'black',
+                         stroke=('white' if abstract_cube.color ==
+                                 CubeColor.BLACK else 'black') if do_rendering else 'black',
                          stroke_width=CUBE_CONFIG.decoration_line_width)
 
     support.append(circle)
 
 
-def draw_paper(support, abstract_cube, cube_x, cube_y):
+def draw_paper(support, abstract_cube, cube_x, cube_y, do_rendering=True):
     paper_x = cube_x + CUBE_CONFIG.decoration_side/2
     paper_y = cube_y + CUBE_CONFIG.decoration_side/2
 
@@ -1019,14 +1062,15 @@ def draw_paper(support, abstract_cube, cube_x, cube_y):
                            height=CUBE_CONFIG.decoration_side,
                            fill=None,
                            fill_opacity=0,
-                           stroke='white' if abstract_cube.color == CubeColor.BLACK else 'black',
+                           stroke=('white' if abstract_cube.color ==
+                                   CubeColor.BLACK else 'black') if do_rendering else 'black',
                            stroke_width=CUBE_CONFIG.decoration_line_width,
                            stroke_linejoin='miter')
 
     support.append(paper)
 
 
-def draw_scissors(support, abstract_cube, cube_x, cube_y):
+def draw_scissors(support, abstract_cube, cube_x, cube_y, do_rendering=True):
     for segment_index in range(2):
 
         segment_data = []
@@ -1048,14 +1092,15 @@ def draw_scissors(support, abstract_cube, cube_x, cube_y):
         segment = draw.Line(*segment_data,
                             fill=None,
                             fill_opacity=0,
-                            stroke='white' if abstract_cube.color == CubeColor.BLACK else 'black',
+                            stroke=('white' if abstract_cube.color ==
+                                    CubeColor.BLACK else 'black') if do_rendering else 'black',
                             stroke_width=CUBE_CONFIG.decoration_line_width,
                             stroke_linecap='butt')
 
         support.append(segment)
 
 
-def draw_wise(support, abstract_cube, cube_x, cube_y):
+def draw_wise(support, abstract_cube, cube_x, cube_y, do_rendering=True):
     center_x = cube_x + CUBE_CONFIG.cube_side/2
     center_y = cube_y + CUBE_CONFIG.cube_side/2
 
@@ -1072,7 +1117,8 @@ def draw_wise(support, abstract_cube, cube_x, cube_y):
         angle_cosinus = math.cos(angle_value)
 
         x = center_x + delta_x*angle_cosinus/(1 + angle_sinus**2)
-        y = center_y + delta_y*angle_cosinus*angle_sinus/(1 + angle_sinus**2)
+        y = center_y + delta_y*angle_cosinus * \
+            angle_sinus/(1 + angle_sinus**2)
 
         wise_data.append(x)
         wise_data.append(y)
@@ -1080,7 +1126,8 @@ def draw_wise(support, abstract_cube, cube_x, cube_y):
     wise = draw.Lines(*wise_data,
                       fill=None,
                       fill_opacity=0,
-                      stroke='white' if abstract_cube.color == CubeColor.BLACK else 'black',
+                      stroke=('white' if abstract_cube.color ==
+                              CubeColor.BLACK else 'black') if do_rendering else 'black',
                       stroke_width=CUBE_CONFIG.decoration_line_width,
                       close=True)
     support.append(wise)
@@ -1094,8 +1141,17 @@ def main():
         draw_board(with_all_labels=False, with_decoration=True)
         draw_board(without_labels=True, with_decoration=True)
 
+        draw_board(do_rendering=False, with_all_labels=False,
+                   with_decoration=True)
+
     if True:
         draw_cubes_and_support()
+
+        draw_cubes_and_support(
+            do_rendering=False, draw_support=True, draw_decorations=False)
+
+        draw_cubes_and_support(
+            do_rendering=False, draw_support=False, draw_decorations=True)
 
 
 CUBE_CONFIG = make_cube_config()
