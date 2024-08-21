@@ -36,6 +36,14 @@ You should have received a copy of the GNU General Public License along with thi
 _project_home = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 _pictures_dir = os.path.join(_project_home, 'pictures')
 
+# TROTEC LASER color codes
+COLOR_TO_ENGRAVE = 'rgb(0,0,0)'
+COLOR_TO_SCORE = 'rgb(255,0,0)'  # In French: marquer ou tracer
+COLOR_TO_CUT_1 = 'rgb(0,0,255)'  # Cut in a first step
+COLOR_TO_CUT_2 = 'rgb(51,102,153)'  # Cut in a second step
+
+LINE_WIDTH_TO_CUT = 2  # pixels
+
 
 class Side(enum.Enum):
     NORTH = enum.auto()
@@ -188,9 +196,10 @@ class CubeConfig:
 
     support_width: float = None
     support_height: float = None
+    support_cut_margin: float = None
 
     cube_side: float = None
-    cube_margin: float = None
+    cube_cut_margin: float = None
     cube_shift: float = None
     cube_line_width: float = None
 
@@ -206,6 +215,7 @@ class BoardConfig:
 
     board_width: float = None
     board_height: float = None
+    board_cut_margin: float = None
 
     board_color: str = None
 
@@ -303,27 +313,34 @@ def make_cube_config():
     # Compute the sizes in cm
 
     cube_side_cm = 1.6
-    cube_margin_cm = 0.1/10
+    cube_cut_margin_cm = 0.1/10
     cube_shift_cm = cube_side_cm
     cube_line_width_cm = 0.1/4
 
     decoration_line_width_cm = 0.15
     decoration_side_cm = 0.5*cube_side_cm
 
-    support_width_cm = col_count * \
-        (cube_shift_cm + cube_margin_cm + cube_side_cm) + cube_shift_cm
+    support_cut_margin_cm = 0.1/10
 
-    support_height_cm = row_count * \
-        (cube_shift_cm + cube_margin_cm + cube_side_cm) + cube_shift_cm
+    support_width_cm = (support_cut_margin_cm +
+                        col_count*(cube_shift_cm + cube_cut_margin_cm + cube_side_cm) +
+                        cube_shift_cm +
+                        support_cut_margin_cm)
+
+    support_height_cm = (support_cut_margin_cm +
+                         row_count*(cube_shift_cm + cube_cut_margin_cm + cube_side_cm) +
+                         cube_shift_cm +
+                         support_cut_margin_cm)
 
     # Deduce other sizes in pixels
 
     support_width = 4096
     support_height = support_width*(support_height_cm/support_width_cm)
+    support_cut_margin = support_width*(support_cut_margin_cm/support_width_cm)
 
     cube_side = support_width*(cube_side_cm/support_width_cm)
 
-    cube_margin = support_width*(cube_margin_cm/support_width_cm)
+    cube_cut_margin = support_width*(cube_cut_margin_cm/support_width_cm)
 
     cube_shift = support_width*(cube_shift_cm/support_width_cm)
 
@@ -353,9 +370,10 @@ def make_cube_config():
 
                              support_width=support_width,
                              support_height=support_height,
+                             support_cut_margin=support_cut_margin,
 
                              cube_side=cube_side,
-                             cube_margin=cube_margin,
+                             cube_cut_margin=cube_cut_margin,
                              cube_shift=cube_shift,
                              cube_line_width=cube_line_width,
 
@@ -364,7 +382,7 @@ def make_cube_config():
 
     print()
     print(f"make_cube_config: cube_side_cm = {cube_side_cm:.2f} ")
-    print(f"make_cube_config: cube_margin_cm = {cube_margin_cm:.2f}")
+    print(f"make_cube_config: cube_cut_margin_cm = {cube_cut_margin_cm:.2f}")
     print(f"make_cube_config: cube_shift_cm = {cube_shift_cm:.2f}")
 
     print()
@@ -374,6 +392,8 @@ def make_cube_config():
     print()
     print(f"make_cube_config: support_width_cm = {support_width_cm:.2f} ")
     print(f"make_cube_config: support_height_cm = {support_height_cm:.2f}")
+    print(
+        f"make_cube_config: support_cut_margin_cm = {support_cut_margin_cm:.2f}")
 
     print()
     print("make_board_config: done")
@@ -402,19 +422,27 @@ def make_board_config():
     board_top_margin_cm = hexagon_side_cm
     board_bottom_margin_cm = hexagon_side_cm
 
-    board_width_cm = (board_left_margin_cm +
-                      max_horizontal_hexagon_count*hexagon_width_cm +
-                      board_right_margin_cm)
+    board_cut_margin_cm = 0.1/10
 
-    board_height_cm = (board_top_margin_cm +
+    board_width_cm = (board_cut_margin_cm +
+                      board_left_margin_cm +
+                      max_horizontal_hexagon_count*hexagon_width_cm +
+                      board_right_margin_cm +
+                      board_cut_margin_cm)
+
+    board_height_cm = (board_cut_margin_cm +
+                       board_top_margin_cm +
                        (max_vertical_hexagon_count//2)*hexagon_side_cm +
                        (max_vertical_hexagon_count - max_vertical_hexagon_count//2)*hexagon_height_cm +
-                       board_bottom_margin_cm)
+                       board_bottom_margin_cm +
+                       board_cut_margin_cm)
 
     # Deduce other sizes in pixels
 
     board_width = 4096
     board_height = board_width*(board_height_cm/board_width_cm)
+
+    board_cut_margin = board_width*(board_cut_margin_cm/board_width_cm)
 
     hexagon_width = board_width*(hexagon_width_cm/board_width_cm)
     hexagon_side = board_width*(hexagon_side_cm/board_width_cm)
@@ -438,17 +466,17 @@ def make_board_config():
         math.sin(hexagon_side_angle)*unit_y
 
     # Label properties
-    label_color = 'black'
+    label_color = COLOR_TO_ENGRAVE
     label_font_family = 'Helvetica'
     label_font_size = int(hexagon_width*0.20)
     label_vertical_shift = -0.60*hexagon_side*unit_y
     label_horizontal_shift = 1.20*hexagon_side*unit_x
 
-    # color and etc.
+    # colors and etc.
     board_color = '#BF9B7A'
     # board_color = 'white'
     hexagon_opacity = 0.45
-    hexagon_line_color = 'black'
+    hexagon_line_color = COLOR_TO_ENGRAVE
 
     hexagon_line_width = board_width*(hexagon_line_width_cm/board_width_cm)
     hexagon_line_width = max(1, hexagon_line_width)
@@ -459,6 +487,7 @@ def make_board_config():
 
                                board_width=board_width,
                                board_height=board_height,
+                               board_cut_margin=board_cut_margin,
 
                                board_color=board_color,
 
@@ -490,6 +519,8 @@ def make_board_config():
     print()
     print(f"make_board_config: board_width_cm = {board_width_cm:.2f} ")
     print(f"make_board_config: board_height_cm = {board_height_cm:.2f}")
+    print(
+        f"make_board_config: board_cut_margin_cm = {board_cut_margin_cm:.2f}")
     print()
     print(f"make_board_config: hexagon_width_cm = {hexagon_width_cm:.2f}")
     print(f"make_board_config: hexagon_height_cm = {hexagon_height_cm:.2f}")
@@ -683,9 +714,13 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
         w=f"{BOARD_CONFIG.board_width_cm}cm", h=f"{BOARD_CONFIG.board_height_cm}cm")
 
     # Draw the outer rectangle
-    outer = draw.Rectangle(x=-BOARD_CONFIG.board_width/2, y=-BOARD_CONFIG.board_height/2,
-                           width=BOARD_CONFIG.board_width, height=BOARD_CONFIG.board_height,
-                           fill=BOARD_CONFIG.board_color)
+    outer = draw.Rectangle(x=-BOARD_CONFIG.board_width/2 + BOARD_CONFIG.board_cut_margin,
+                           y=-BOARD_CONFIG.board_height/2 + BOARD_CONFIG.board_cut_margin,
+                           width=BOARD_CONFIG.board_width - 2*BOARD_CONFIG.board_cut_margin,
+                           height=BOARD_CONFIG.board_height - 2*BOARD_CONFIG.board_cut_margin,
+                           fill=BOARD_CONFIG.board_color,
+                           stroke=COLOR_TO_CUT_1,
+                           stroke_width=LINE_WIDTH_TO_CUT)
 
     board.append(outer)
 
@@ -721,9 +756,9 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
         hexagon_gradient = draw.RadialGradient(
             cx=abstract_hexagon.center[0], cy=abstract_hexagon.center[1], r=hexagon_scale*BOARD_CONFIG.hexagon_side)
         hexagon_gradient.add_stop(
-            offset=0, color='black', opacity=hexagon_opacity*0.00)
+            offset=0, color=COLOR_TO_ENGRAVE, opacity=hexagon_opacity*0.00)
         hexagon_gradient.add_stop(
-            offset=1, color='black', opacity=hexagon_opacity*1.00)
+            offset=1, color=COLOR_TO_ENGRAVE, opacity=hexagon_opacity*1.00)
 
         hexagon = draw.Lines(*hexagon_vertex_data,
                              fill=hexagon_gradient,
@@ -892,8 +927,12 @@ def draw_cubes_and_support():
         w=f"{CUBE_CONFIG.support_width_cm}cm", h=f"{CUBE_CONFIG.support_height_cm}cm")
 
     # Draw the outer rectangle
-    outer = draw.Rectangle(x=0, y=0, width=CUBE_CONFIG.support_width, height=CUBE_CONFIG.support_height,
-                           fill=CUBE_CONFIG.support_color)
+    outer = draw.Rectangle(x=CUBE_CONFIG.support_cut_margin, y=CUBE_CONFIG.support_cut_margin,
+                           width=CUBE_CONFIG.support_width - 2*CUBE_CONFIG.support_cut_margin,
+                           height=CUBE_CONFIG.support_height - 2*CUBE_CONFIG.support_cut_margin,
+                           fill=CUBE_CONFIG.support_color,
+                           stroke=COLOR_TO_CUT_2,
+                           stroke_width=LINE_WIDTH_TO_CUT)
 
     support.append(outer)
 
@@ -905,18 +944,20 @@ def draw_cubes_and_support():
             if abstract_cube is not None:
 
                 cube_x = CUBE_CONFIG.cube_shift + col_index * \
-                    (CUBE_CONFIG.cube_margin +
+                    (CUBE_CONFIG.cube_cut_margin +
                      CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_shift)
 
                 cube_y = CUBE_CONFIG.cube_shift + row_index * \
-                    (CUBE_CONFIG.cube_margin +
+                    (CUBE_CONFIG.cube_cut_margin +
                      CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_shift)
 
-                outer_cube = draw.Rectangle(x=cube_x - CUBE_CONFIG.cube_margin/2,
-                                            y=cube_y - CUBE_CONFIG.cube_margin/2,
-                                            width=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_margin,
-                                            height=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_margin,
-                                            fill='green')
+                outer_cube = draw.Rectangle(x=cube_x - CUBE_CONFIG.cube_cut_margin/2,
+                                            y=cube_y - CUBE_CONFIG.cube_cut_margin/2,
+                                            width=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_cut_margin,
+                                            height=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_cut_margin,
+                                            fill=None,
+                                            stroke=COLOR_TO_CUT_1,
+                                            stroke_width=LINE_WIDTH_TO_CUT)
                 support.append(outer_cube)
 
                 draw_cube(support, abstract_cube, cube_x, cube_y)
@@ -1018,10 +1059,10 @@ def draw_wise(support, abstract_cube, cube_x, cube_y):
     center_x = cube_x + CUBE_CONFIG.cube_side/2
     center_y = cube_y + CUBE_CONFIG.cube_side/2
 
-    wise_data = list()
-
     delta_x = CUBE_CONFIG.decoration_side/2
     delta_y = CUBE_CONFIG.decoration_side
+
+    wise_data = list()
 
     angle_count = 100
     for angle_index in range(angle_count):
