@@ -711,7 +711,7 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
         file_name += '_without_gradient'
 
     if not with_opacity:
-        file_name += 'without_opacity'
+        file_name += '_without_opacity'
 
     if not do_rendering:
         file_name = file_name.replace('pijersi_', 'pijersi_laser_')
