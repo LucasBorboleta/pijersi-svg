@@ -940,7 +940,7 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
     print("draw_board: done")
 
 
-def draw_cubes_and_support(do_rendering=True, draw_support=True, draw_decorations=True):
+def draw_cubes_and_support(do_rendering=True, draw_support=True, draw_decorations=True, draw_cubes=True):
 
     print()
     print("draw_cubes_and_support: ...")
@@ -954,6 +954,9 @@ def draw_cubes_and_support(do_rendering=True, draw_support=True, draw_decoration
     else:
         if draw_support:
             file_name = 'pijersi_laser_cubes_support'
+
+            if not draw_cubes:
+                file_name += '_without_cubes'
 
         elif draw_decorations:
             file_name = 'pijersi_laser_cubes_decorations'
@@ -1003,7 +1006,7 @@ def draw_cubes_and_support(do_rendering=True, draw_support=True, draw_decoration
                     (CUBE_CONFIG.cube_cut_margin +
                      CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_shift)
 
-                if (not do_rendering) and draw_support:
+                if (not do_rendering) and draw_support and draw_cubes:
                     outer_cube = draw.Rectangle(x=cube_x - CUBE_CONFIG.cube_cut_margin/2,
                                                 y=cube_y - CUBE_CONFIG.cube_cut_margin/2,
                                                 width=CUBE_CONFIG.cube_side + CUBE_CONFIG.cube_cut_margin,
@@ -1158,10 +1161,10 @@ def main():
         draw_board(without_labels=True, with_decoration=True)
 
         draw_board(with_all_labels=False, with_decoration=True)
-        
+
         draw_board(with_all_labels=False,
                    with_decoration=True, with_gradient=False)
-        
+
         draw_board(with_all_labels=False,
                    with_decoration=True, with_gradient=False, with_opacity=False)
 
@@ -1176,6 +1179,9 @@ def main():
 
     if True:
         draw_cubes_and_support()
+
+        draw_cubes_and_support(
+            do_rendering=False, draw_support=True, draw_decorations=False, draw_cubes=False)
 
         draw_cubes_and_support(
             do_rendering=False, draw_support=True, draw_decorations=False)
