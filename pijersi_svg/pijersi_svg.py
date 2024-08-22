@@ -403,7 +403,7 @@ def make_cube_config():
     return cube_config
 
 
-def make_board_config():
+def make_board_config(do_tiny=False):
 
     print()
     print("make_board_config: ...")
@@ -416,14 +416,22 @@ def make_board_config():
     hexagon_padding_cm = 0.3
     hexagon_line_width_cm = 0.1/4
 
-    max_horizontal_hexagon_count = 7
-    max_vertical_hexagon_count = 7
+    if do_tiny:
+        max_horizontal_hexagon_count = 3
+        max_vertical_hexagon_count = 1
+    else:
+        max_horizontal_hexagon_count = 7
+        max_vertical_hexagon_count = 7
 
     board_left_margin_cm = hexagon_width_cm/2
     board_right_margin_cm = hexagon_width_cm/2
 
-    board_top_margin_cm = hexagon_side_cm
-    board_bottom_margin_cm = hexagon_side_cm
+    if do_tiny:
+        board_top_margin_cm = hexagon_side_cm/2
+        board_bottom_margin_cm = hexagon_side_cm/2
+    else:
+        board_top_margin_cm = hexagon_side_cm
+        board_bottom_margin_cm = hexagon_side_cm
 
     board_cut_margin_cm = 0.1/10
 
@@ -595,6 +603,14 @@ class Hexagon:
             Hexagon.__init_done = True
 
     @staticmethod
+    def reset():
+        Hexagon.__all_sorted_hexagons = []
+        Hexagon.__init_done = False
+        Hexagon.__layout = []
+        Hexagon.__name_to_hexagon = {}
+        Hexagon.__position_uv_to_hexagon = {}
+
+    @staticmethod
     def print_hexagons():
         for hexagon in Hexagon.__all_sorted_hexagons:
             print(hexagon)
@@ -694,9 +710,17 @@ class Hexagon:
         Hexagon('g6', (1, 3), ring=0, label_side=Side.EAST)
 
 
-def draw_board(with_all_labels=False, without_labels=False, with_decoration=False, do_rendering=True, with_gradient=True, with_opacity=True):
+def draw_board(with_all_labels=False, without_labels=False, with_decoration=False,
+               do_rendering=True, with_gradient=True, with_opacity=True, do_tiny=False):
     print()
     print("draw_board: ...")
+
+    global BOARD_CONFIG
+
+    if do_tiny:
+        BOARD_CONFIG = make_board_config(do_tiny=True)
+        Hexagon.reset()
+        Hexagon.init()
 
     if without_labels:
         file_name = 'pijersi_board_without_labels'
@@ -718,6 +742,9 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
 
     if not do_rendering:
         file_name = file_name.replace('pijersi_', 'pijersi_laser_')
+
+    if do_tiny:
+        file_name = file_name.replace('pijersi_', 'tiny_pijersi_')
 
     # Define the board
     board = draw.Drawing(width=BOARD_CONFIG.board_width, height=BOARD_CONFIG.board_height,
@@ -747,6 +774,10 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
     # Draw the hexagons
 
     for abstract_hexagon in Hexagon.all:
+
+        if do_tiny:
+            if abstract_hexagon.name not in ['d3', 'd4', 'd5']:
+                continue
 
         hexagon_vertex_data = []
         hexagon_vertices = []
@@ -920,6 +951,16 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
                 else:
                     label_location = None
 
+            if do_tiny:
+                if abstract_hexagon.name == 'd3':
+                    label_location = abstract_hexagon.center - BOARD_CONFIG.label_horizontal_shift
+
+                elif abstract_hexagon.name == 'd5':
+                    label_location = abstract_hexagon.center + BOARD_CONFIG.label_horizontal_shift
+
+                else:
+                    label_location = None
+
         if label_location is not None:
             board.append(draw.Text(text=abstract_hexagon.name,
                                    font_size=BOARD_CONFIG.label_font_size,
@@ -938,6 +979,12 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
     print("draw_board: save as PNG ...")
     board.save_png(os.path.join(_pictures_dir, f"{file_name}.png"))
     print("draw_board: save as PNG done")
+
+    if do_tiny:
+        #       >> reset to default
+        BOARD_CONFIG = make_board_config()
+        Hexagon.reset()
+        Hexagon.init()
 
     print()
     print("draw_board: done")
@@ -1156,6 +1203,17 @@ def draw_wise(support, abstract_cube, cube_x, cube_y, do_rendering=True):
 
 
 def main():
+
+    if True:
+        draw_board(do_rendering=False, with_all_labels=False,
+                   with_decoration=True, do_tiny=True)
+
+        draw_board(do_rendering=False, with_all_labels=False,
+                   with_decoration=True, do_tiny=True, with_gradient=False)
+
+        draw_board(do_rendering=False, with_all_labels=False, with_decoration=True,
+                   do_tiny=True, with_gradient=False, with_opacity=False)
+
     if True:
         draw_board(with_all_labels=True)
         draw_board(with_all_labels=False)
@@ -1195,6 +1253,7 @@ def main():
 
 CUBE_CONFIG = make_cube_config()
 BOARD_CONFIG = make_board_config()
+
 Hexagon.init()
 
 if __name__ == "__main__":
