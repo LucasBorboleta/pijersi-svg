@@ -691,7 +691,7 @@ class Hexagon:
         Hexagon('g6', (1, 3), ring=0, label_side=Side.EAST)
 
 
-def draw_board(with_all_labels=False, without_labels=False, with_decoration=False, do_rendering=True):
+def draw_board(with_all_labels=False, without_labels=False, with_decoration=False, do_rendering=True, with_gradient=True, with_opacity=True):
     print()
     print("draw_board: ...")
 
@@ -706,6 +706,12 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
 
     if with_decoration:
         file_name += '_with_decoration'
+
+    if not with_gradient:
+        file_name += '_without_gradient'
+
+    if not with_opacity:
+        file_name += 'without_opacity'
 
     if not do_rendering:
         file_name = file_name.replace('pijersi_', 'pijersi_laser_')
@@ -764,20 +770,30 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
         hexagon_opacity = BOARD_CONFIG.hexagon_opacity * \
             (1 if abstract_hexagon.ring % 2 == 0 else 0.5)
 
-        hexagon_gradient = draw.RadialGradient(
-            cx=abstract_hexagon.center[0], cy=abstract_hexagon.center[1], r=hexagon_scale*BOARD_CONFIG.hexagon_side)
-        hexagon_gradient.add_stop(
-            offset=0, color=COLOR_TO_ENGRAVE, opacity=hexagon_opacity*0.00)
-        hexagon_gradient.add_stop(
-            offset=1, color=COLOR_TO_ENGRAVE, opacity=hexagon_opacity*1.00)
+        if with_gradient:
+            hexagon_gradient = draw.RadialGradient(
+                cx=abstract_hexagon.center[0], cy=abstract_hexagon.center[1], r=hexagon_scale*BOARD_CONFIG.hexagon_side)
 
-        hexagon = draw.Lines(*hexagon_vertex_data,
-                             fill=hexagon_gradient,
-                             # fill=None,
-                             # fill_opacity=hexagon_opacity,
-                             stroke=BOARD_CONFIG.hexagon_line_color,
-                             stroke_width=BOARD_CONFIG.hexagon_line_width,
-                             close=True)
+            hexagon_gradient.add_stop(
+                offset=0, color=COLOR_TO_ENGRAVE, opacity=hexagon_opacity*0.00)
+
+            hexagon_gradient.add_stop(
+                offset=1, color=COLOR_TO_ENGRAVE, opacity=hexagon_opacity*1.00)
+
+            hexagon = draw.Lines(*hexagon_vertex_data,
+                                 fill=hexagon_gradient,
+                                 stroke=BOARD_CONFIG.hexagon_line_color,
+                                 stroke_width=BOARD_CONFIG.hexagon_line_width,
+                                 close=True)
+
+        else:
+            hexagon = draw.Lines(*hexagon_vertex_data,
+                                 fill=None,
+                                 fill_opacity=hexagon_opacity*0.5 if with_opacity else 0,
+                                 stroke=BOARD_CONFIG.hexagon_line_color,
+                                 stroke_width=BOARD_CONFIG.hexagon_line_width,
+                                 close=True)
+
         board.append(hexagon)
 
         if with_decoration and abstract_hexagon.ring % 2 == 1:
@@ -1136,13 +1152,27 @@ def draw_wise(support, abstract_cube, cube_x, cube_y, do_rendering=True):
 def main():
     if True:
         draw_board(with_all_labels=True)
-        draw_board(without_labels=True)
         draw_board(with_all_labels=False)
-        draw_board(with_all_labels=False, with_decoration=True)
+
+        draw_board(without_labels=True)
         draw_board(without_labels=True, with_decoration=True)
+
+        draw_board(with_all_labels=False, with_decoration=True)
+        
+        draw_board(with_all_labels=False,
+                   with_decoration=True, with_gradient=False)
+        
+        draw_board(with_all_labels=False,
+                   with_decoration=True, with_gradient=False, with_opacity=False)
 
         draw_board(do_rendering=False, with_all_labels=False,
                    with_decoration=True)
+
+        draw_board(do_rendering=False, with_all_labels=False,
+                   with_decoration=True, with_gradient=False)
+
+        draw_board(do_rendering=False, with_all_labels=False,
+                   with_decoration=True, with_gradient=False, with_opacity=False)
 
     if True:
         draw_cubes_and_support()
