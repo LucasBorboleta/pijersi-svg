@@ -36,6 +36,9 @@ You should have received a copy of the GNU General Public License along with thi
 _project_home = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 _pictures_dir = os.path.join(_project_home, 'pictures')
 
+RANDOM_SEED = 20240822
+random.seed(a=RANDOM_SEED)
+
 # TROTEC LASER color codes
 COLOR_TO_ENGRAVE = 'rgb(0,0,0)'
 COLOR_TO_SCORE = 'rgb(255,0,0)'  # In French: marquer ou tracer
