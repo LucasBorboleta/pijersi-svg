@@ -710,7 +710,7 @@ class Hexagon:
         Hexagon('g6', (1, 3), ring=0, label_side=Side.EAST)
 
 
-def draw_board(with_all_labels=False, without_labels=False, with_decoration=False,
+def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with_decoration=False,
                do_rendering=True, with_gradient=True, with_opacity=True, do_tiny=False):
     print()
     print("draw_board: ...")
@@ -746,11 +746,15 @@ def draw_board(with_all_labels=False, without_labels=False, with_decoration=Fals
     if do_tiny:
         file_name = file_name.replace('pijersi_', 'tiny_pijersi_')
 
+    if scale_factor != 1:
+        file_name = f"scale-{scale_factor:.2f}-{file_name}"
+
     # Define the board
     board = draw.Drawing(width=BOARD_CONFIG.board_width, height=BOARD_CONFIG.board_height,
                          origin=(-BOARD_CONFIG.board_width/2, -BOARD_CONFIG.board_height/2))
     board.set_render_size(
-        w=f"{BOARD_CONFIG.board_width_cm}cm", h=f"{BOARD_CONFIG.board_height_cm}cm")
+        w=f"{scale_factor*BOARD_CONFIG.board_width_cm}cm",
+        h=f"{scale_factor*BOARD_CONFIG.board_height_cm}cm")
 
     # Draw the outer rectangle
     if do_rendering:
@@ -1202,9 +1206,59 @@ def draw_wise(support, abstract_cube, cube_x, cube_y, do_rendering=True):
     support.append(wise)
 
 
+def draw_isolated_cubes(scale_factor=1):
+    print()
+    print("draw_isolated_cubes: ...")
+
+    cube_dict = {}
+
+    cube_dict['rock-black'] = Cube(kind=CubeKind.ROCK, color=CubeColor.BLACK)
+    cube_dict['paper-black'] = Cube(kind=CubeKind.PAPER, color=CubeColor.BLACK)
+    cube_dict['scissors-black'] = Cube(kind=CubeKind.SCISSORS,
+                                       color=CubeColor.BLACK)
+    cube_dict['wise-black'] = Cube(kind=CubeKind.WISE, color=CubeColor.BLACK)
+
+    cube_dict['rock-white'] = Cube(kind=CubeKind.ROCK, color=CubeColor.WHITE)
+    cube_dict['paper-white'] = Cube(kind=CubeKind.PAPER, color=CubeColor.WHITE)
+    cube_dict['scissors-white'] = Cube(kind=CubeKind.SCISSORS,
+                                       color=CubeColor.WHITE)
+    cube_dict['wise-white'] = Cube(kind=CubeKind.WISE, color=CubeColor.WHITE)
+
+    for (cube_name, abstract_cube) in cube_dict.items():
+
+        support = draw.Drawing(width=CUBE_CONFIG.cube_side,
+                               height=CUBE_CONFIG.cube_side, origin=(0, 0))
+
+        support.set_render_size(w=f"{scale_factor*CUBE_CONFIG.cube_side_cm}cm",
+                                h=f"{scale_factor*CUBE_CONFIG.cube_side_cm}cm")
+
+        draw_cube(support, abstract_cube, cube_x=0, cube_y=0,
+                  do_rendering=True, draw_decorations=True)
+
+        print()
+        print(f"draw_isolated_cubes: save {cube_name} as SVG ...")
+        support.save_svg(os.path.join(_pictures_dir, f"{cube_name}.svg"))
+        print(f"draw_isolated_cubes: save {cube_name} as SVG done")
+
+        print()
+        print(f"draw_cubes_and_support: save {cube_name} as PNG ...")
+        support.save_png(os.path.join(_pictures_dir, f"{cube_name}.png"))
+        print(f"draw_isolated_cubes: save {cube_name} as PNG done")
+
+    print()
+    print("draw_isolated_cubes: done")
+
+
 def main():
 
     if True:
+        # -- Generate accurate PNG for pijersi-certu, so use a large scale_factor
+        draw_isolated_cubes(scale_factor=18)
+
+        draw_board(scale_factor=5., without_labels=True,
+                   with_decoration=True)
+
+    if False:
         draw_board(do_rendering=False, with_all_labels=False,
                    with_decoration=True, do_tiny=True)
 
@@ -1214,7 +1268,7 @@ def main():
         draw_board(do_rendering=False, with_all_labels=False, with_decoration=True,
                    do_tiny=True, with_gradient=False, with_opacity=False)
 
-    if True:
+    if False:
         draw_board(with_all_labels=True)
         draw_board(with_all_labels=False)
 
@@ -1238,7 +1292,7 @@ def main():
         draw_board(do_rendering=False, with_all_labels=False,
                    with_decoration=True, with_gradient=False, with_opacity=False)
 
-    if True:
+    if False:
         draw_cubes_and_support()
 
         draw_cubes_and_support(
