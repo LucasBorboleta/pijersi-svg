@@ -843,10 +843,10 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
 
         if with_decoration and abstract_hexagon.ring % 2 == 1:
             
-            draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=0)
+            draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=200)
             
             if with_texture:
-                draw_gradient_texture(board, hexagon_center, hexagon_vertices, segment_count=600)
+                draw_gradient_texture(board, hexagon_center, hexagon_vertices, segment_count=800)
             
 
         if with_decoration and abstract_hexagon.ring % 2 == 0:
@@ -933,7 +933,8 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
                                                    )
                     board.append(decorater_circle)
                 
-                draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=5_000, masking_radius=decorater_circle_radius)
+                draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=1_500, masking_radius=decorater_circle_radius)
+                draw_gradient_texture(board, hexagon_center, hexagon_vertices, segment_count=500)
 
 
 
@@ -1006,7 +1007,7 @@ def draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=
                     vertices[0] + p*(vertices[1] - vertices[0]))
     
             t = random.uniform(0, 1)
-            u = random.uniform(0.02, 0.05)
+            u = random.uniform(0.005, 0.01)
             a = min(1, max(0, t - u/2))
             b = min(1, max(0, t + u/2))
     
@@ -1087,7 +1088,7 @@ def draw_gradient_texture(board, hexagon_center, hexagon_vertices, segment_count
 
             t = random.betavariate(alpha=alpha, beta=beta)
         
-        width = random.uniform(0.02, 0.05)
+        width = random.uniform(0.02, 0.02)
         a = min(1, max(0, t - width/2))
         b = min(1, max(0, t + width/2))
 
