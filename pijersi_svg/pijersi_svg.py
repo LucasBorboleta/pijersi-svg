@@ -711,7 +711,8 @@ class Hexagon:
 
 
 def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with_decoration=False,
-               do_rendering=True, with_gradient=True, with_opacity=True, do_tiny=False, with_texture=False):
+               do_rendering=True, with_gradient=True, with_opacity=True, do_tiny=False, with_texture=False, 
+               with_concentrated_texture=False, with_concentric_hexas=False):
 
     print()
     print("draw_board: ...")
@@ -743,6 +744,12 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
 
     if with_texture:
         file_name += '_with_texture'
+
+    if with_concentrated_texture:
+        file_name += '_with_concentrated_texture'
+
+    if with_concentric_hexas:
+        file_name += '_with_concentric_hexas'
 
     if not do_rendering:
         file_name = file_name.replace('pijersi_', 'pijersi_laser_')
@@ -836,17 +843,24 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
                                  fill=None if abstract_hexagon.ring % 2 == 1 else 'black',
                                  fill_opacity=hexagon_opacity*0.5 if with_opacity else 0,
                                  stroke=BOARD_CONFIG.hexagon_line_color,
-                                 stroke_width=BOARD_CONFIG.hexagon_line_width,
+                                 stroke_width=BOARD_CONFIG.hexagon_line_width*2,
                                  close=True)
 
         board.append(hexagon)
 
         if with_decoration and abstract_hexagon.ring % 2 == 1:
             
-            draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=200)
+            if with_concentric_hexas:
+                draw_concentric_hexas(board, hexagon_center, hexagon_vertices)
+                
+            elif with_concentrated_texture:
+                draw_concentrated_texture(board, hexagon_center, hexagon_vertices, segment_count=600)
             
-            if with_texture:
+            elif with_texture:
                 draw_gradient_texture(board, hexagon_center, hexagon_vertices, segment_count=800)
+                
+            else:
+                draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=1_000)
             
 
         if with_decoration and abstract_hexagon.ring % 2 == 0:
@@ -916,11 +930,19 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
                                               stroke_width=BOARD_CONFIG.hexagon_line_width,
                                               close=True)
                 board.append(rotating_polygon)
+
+
+            decorater_circle_scale = 0.75
+            decorater_circle_radius = decorater_circle_scale*BOARD_CONFIG.hexagon_side
+
+            
+            if with_concentric_hexas:
+                draw_concentric_hexas(board, hexagon_center, hexagon_vertices, hexa_count=1, hexa_scale_min=0.93, hexa_scale_max=1.00)
+
+            if with_concentrated_texture:
+                draw_concentrated_texture(board, hexagon_center, hexagon_vertices, segment_count=500, masking_radius=decorater_circle_radius)
             
             if with_texture:
-
-                decorater_circle_scale = 0.75
-                decorater_circle_radius = decorater_circle_scale*BOARD_CONFIG.hexagon_side
                 
                 if False:
                     decorater_circle = draw.Circle(cx=abstract_hexagon.center[0], 
@@ -935,7 +957,6 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
                 
                 draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=1_500, masking_radius=decorater_circle_radius)
                 draw_gradient_texture(board, hexagon_center, hexagon_vertices, segment_count=500)
-
 
 
         if without_labels:
@@ -994,30 +1015,145 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
     print("draw_board: done")
     
     
-def draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=500, masking_radius=None):
+def draw_concentric_hexas(board, hexagon_center, hexagon_vertices, hexa_count=12, hexa_scale_min=1/4, hexa_scale_max=1):
+
+
+    hexagon_scale = 1 - BOARD_CONFIG.hexagon_padding/BOARD_CONFIG.hexagon_width
+    hexagon_effective_side = hexagon_scale*BOARD_CONFIG.hexagon_side
+    
+    
+    for hexa_index in range(hexa_count + 1):
+        
+        s = hexa_index/hexa_count
+        
+        fs = s**2
+        
+        hexa_scale = fs*hexa_scale_min + (1 - fs)*hexa_scale_max
+
+        hexa_vertex_data = []
+        hexa_vertices = []
+
+        # hexa_side_count = 12
+        # angle_shift = 0
+        hexa_side_count = 6
+        angle_shift = 0.5
+
+        for vertex_index in range(hexa_side_count):
+            vertex_angle = (vertex_index +angle_shift)*2*math.pi / \
+                hexa_side_count
+
+            hexa_vertex = hexagon_center
+
+            hexa_vertex = hexa_vertex + hexa_scale*hexagon_effective_side * \
+                math.cos(vertex_angle)*BOARD_CONFIG.unit_x
+
+            hexa_vertex = hexa_vertex + hexa_scale*hexagon_effective_side * \
+                math.sin(vertex_angle)*BOARD_CONFIG.unit_y
+
+            hexa_vertex_data.append(
+                hexa_vertex[0])
+            hexa_vertex_data.append(
+                hexa_vertex[1])
+
+            hexa_vertices.append(hexa_vertex)
+
+        hexa = draw.Lines(*hexa_vertex_data,
+                                       fill=None,
+                                       fill_opacity=0,
+                                       stroke=BOARD_CONFIG.hexagon_line_color,
+                                       stroke_width=BOARD_CONFIG.hexagon_line_width,
+                                       close=True)
+        
+        board.append(hexa)
+    
+    
+def draw_concentrated_texture(board, hexagon_center, hexagon_vertices, segment_count=500, masking_radius=None):
+    
+    hexagon_side = TinyVector.norm(hexagon_vertices[0] - hexagon_center)
     
     for _ in range(segment_count):
+        
+        
+        while True:
+            border_points = []
+            
+            vertex_index = random.randint(0, 5)
+            vertices = [hexagon_vertices[vertex_index], hexagon_vertices[(vertex_index + 1)%6]]
+            p = random.uniform(0, 1)
+            border_points.append( (1 - p)*vertices[0] + p*vertices[1] )
 
+            vertex_index = (vertex_index + 3) % 6
+            vertices = [hexagon_vertices[vertex_index], hexagon_vertices[(vertex_index + 1)%6]]
+            p = random.uniform(0, 1)
+            border_points.append( (1 - p)*vertices[0] + p*vertices[1] )
+
+            border_side = TinyVector.norm(border_points[1] - border_points[0])
+    
+            alpha = 0.15
+            beta = alpha
+            t = random.betavariate(alpha=alpha, beta=beta)
+            
+            u = random.uniform(0.01, 0.06)*hexagon_side/border_side
+            a = min(1, max(0, t - u/2))
+            b = min(1, max(0, t + u/2))
+    
+            segment_edges = []
+            segment_edges.append( (1 - a)*border_points[0] + a*border_points[1] )
+            segment_edges.append( (1 - b)*border_points[0] + b*border_points[1] )
+            
+            if masking_radius is None:
+                break
+            
+            else:
+                validated_segment_edges = True
+                
+                for segment_edge in segment_edges:
+                    segment_vector = segment_edge - hexagon_center
+                    if TinyVector.norm(segment_vector) < masking_radius:
+                        validated_segment_edges = False
+
+                if validated_segment_edges:
+                    break
+            
+
+        segment_data = []
+        for segment_edge in segment_edges:
+            segment_data.append(segment_edge[0])
+            segment_data.append(segment_edge[1])
+
+        segment = draw.Line(*segment_data,
+                            fill=None,
+                            fill_opacity=0,
+                            stroke=BOARD_CONFIG.hexagon_line_color,
+                            stroke_width=BOARD_CONFIG.hexagon_line_width)
+
+        board.append(segment)
+    
+    
+def draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=500, masking_radius=None):
+    
+    hexagon_side = TinyVector.norm(hexagon_vertices[0] - hexagon_center)
+    
+    for _ in range(segment_count):
+        
+        
         while True:
             border_points = []
             for _ in range(2):
                 vertices = random.sample(hexagon_vertices, 2)
                 p = random.uniform(0, 1)
-                border_points.append(
-                    vertices[0] + p*(vertices[1] - vertices[0]))
+                border_points.append( (1 - p)*vertices[0] + p*vertices[1] )
+
+            border_side = TinyVector.norm(border_points[1] - border_points[0])
     
             t = random.uniform(0, 1)
-            u = random.uniform(0.005, 0.01)
+            u = random.uniform(0.01, 0.08)*hexagon_side/border_side
             a = min(1, max(0, t - u/2))
             b = min(1, max(0, t + u/2))
     
             segment_edges = []
-            
-            segment_edges.append(
-                border_points[0] + a*(border_points[1] - border_points[0]))
-            
-            segment_edges.append(
-                border_points[0] + b*(border_points[1] - border_points[0]))
+            segment_edges.append( (1 - a)*border_points[0] + a*border_points[1] )
+            segment_edges.append( (1 - b)*border_points[0] + b*border_points[1] )
             
             if masking_radius is None:
                 break
@@ -1370,21 +1506,33 @@ def draw_isolated_cubes(scale_factor=1):
 
 
 def main():
-
+    
+    if True:
+        draw_board(do_rendering=True, with_all_labels=False, with_decoration=True, with_gradient=False, with_opacity=False,
+                   with_concentric_hexas=True)
+    
+    if True:
+        draw_board(do_rendering=True, with_all_labels=False, with_decoration=True, with_gradient=False, with_opacity=False,
+                   with_concentrated_texture=True)
+      
     if True:
         # -- Simulate texture with a gradient
         draw_board(do_rendering=True, with_all_labels=False, with_decoration=True, with_gradient=False, with_opacity=False,
                    with_texture=True)
         
+        # -- Generate accurate PNG for pijersi-certu, so use a large scale_factor
+        draw_board(scale_factor=5., do_rendering=True, without_labels=True, with_decoration=True, with_gradient=False, with_opacity=False,
+                   with_texture=True)
+        
 
-    if False:
+    if True:
         # -- Generate accurate PNG for pijersi-certu, so use a large scale_factor
         draw_isolated_cubes(scale_factor=18)
 
         draw_board(scale_factor=5., without_labels=True,
                    with_decoration=True)
 
-    if False:
+    if True:
         draw_board(do_rendering=False, with_all_labels=False,
                    with_decoration=True, do_tiny=True)
 
@@ -1394,7 +1542,7 @@ def main():
         draw_board(do_rendering=False, with_all_labels=False, with_decoration=True,
                    do_tiny=True, with_gradient=False, with_opacity=False)
 
-    if False:
+    if True:
         draw_board(with_all_labels=True)
         draw_board(with_all_labels=False)
 
@@ -1418,7 +1566,7 @@ def main():
         draw_board(do_rendering=False, with_all_labels=False,
                    with_decoration=True, with_gradient=False, with_opacity=False)
 
-    if False:
+    if True:
         draw_cubes_and_support()
 
         draw_cubes_and_support(
