@@ -860,7 +860,7 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
                 draw_gradient_texture(board, hexagon_center, hexagon_vertices, segment_count=800)
                 
             else:
-                draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=1_000)
+                draw_uniform_texture(board, hexagon_center, hexagon_vertices, segment_count=1_500)
             
 
         if with_decoration and abstract_hexagon.ring % 2 == 0:
@@ -1508,14 +1508,19 @@ def draw_isolated_cubes(scale_factor=1):
 def main():
     
     if True:
+        draw_board(do_rendering=False, with_all_labels=False, with_decoration=True,
+                   do_tiny=False, with_gradient=False, with_opacity=False)
+    
+    
+    if False:
         draw_board(do_rendering=True, with_all_labels=False, with_decoration=True, with_gradient=False, with_opacity=False,
                    with_concentric_hexas=True)
     
-    if True:
+    if False:
         draw_board(do_rendering=True, with_all_labels=False, with_decoration=True, with_gradient=False, with_opacity=False,
                    with_concentrated_texture=True)
       
-    if True:
+    if False:
         # -- Simulate texture with a gradient
         draw_board(do_rendering=True, with_all_labels=False, with_decoration=True, with_gradient=False, with_opacity=False,
                    with_texture=True)
@@ -1525,14 +1530,14 @@ def main():
                    with_texture=True)
         
 
-    if True:
+    if False:
         # -- Generate accurate PNG for pijersi-certu, so use a large scale_factor
         draw_isolated_cubes(scale_factor=18)
 
         draw_board(scale_factor=5., without_labels=True,
                    with_decoration=True)
 
-    if True:
+    if False:
         draw_board(do_rendering=False, with_all_labels=False,
                    with_decoration=True, do_tiny=True)
 
@@ -1542,7 +1547,7 @@ def main():
         draw_board(do_rendering=False, with_all_labels=False, with_decoration=True,
                    do_tiny=True, with_gradient=False, with_opacity=False)
 
-    if True:
+    if False:
         draw_board(with_all_labels=True)
         draw_board(with_all_labels=False)
 
@@ -1566,7 +1571,7 @@ def main():
         draw_board(do_rendering=False, with_all_labels=False,
                    with_decoration=True, with_gradient=False, with_opacity=False)
 
-    if True:
+    if False:
         draw_cubes_and_support()
 
         draw_cubes_and_support(
