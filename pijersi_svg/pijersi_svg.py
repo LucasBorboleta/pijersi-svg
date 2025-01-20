@@ -738,7 +738,7 @@ class Hexagon:
 
 def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with_decoration=False,
                do_rendering=True, with_gradient=True, with_opacity=True, do_tiny=False, with_texture=False,
-               with_concentrated_texture=False, with_concentric_hexas=False, hexagon_line_color=None):
+               with_concentrated_texture=False, with_concentric_hexas=False, hexagon_line_color=None, with_hexagon_border=True):
 
     print()
     print("draw_board: ...")
@@ -868,7 +868,7 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
             hexagon = draw.Lines(*hexagon_vertex_data,
                                  fill=hexagon_gradient,
                                  stroke=hexagon_line_color,
-                                 stroke_width=BOARD_CONFIG.hexagon_line_width,
+                                 stroke_width=BOARD_CONFIG.hexagon_line_width if with_hexagon_border else '',
                                  close=True)
 
         else:
@@ -1605,7 +1605,8 @@ def main():
 
         draw_board(scale_factor=5., without_labels=True,
                    with_decoration=True, 
-                   hexagon_line_color='#40210F')
+                   hexagon_line_color='#40210F',
+                    with_hexagon_border=False)
 
     if False:
         draw_board(do_rendering=False, with_all_labels=False,
