@@ -256,7 +256,7 @@ class BoardConfig:
     label_horizontal_shift: TinyVector = None
 
 
-def make_cube_config():
+def make_cube_config(do_large=False):
 
     print()
     print("make_cube_config: ...")
@@ -323,7 +323,11 @@ def make_cube_config():
 
     # Compute the sizes in cm
 
-    cube_side_cm = 1.6
+    if do_large:
+        cube_side_cm = 2.0
+    else:
+        cube_side_cm = 1.6
+        
     cube_cut_margin_cm = 0.1/10
     cube_shift_cm = cube_side_cm
     cube_line_width_cm = 0.1/4
@@ -737,16 +741,25 @@ class Hexagon:
 
 
 def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with_decoration=False,
-               do_rendering=True, with_gradient=True, with_opacity=True, do_tiny=False, with_texture=False,
+               do_rendering=True, with_gradient=True, with_opacity=True, do_tiny=False, do_large=False, with_texture=False,
                with_concentrated_texture=False, with_concentric_hexas=False, hexagon_line_color=None, with_hexagon_border=True):
 
     print()
     print("draw_board: ...")
 
     global BOARD_CONFIG
+    global CUBE_CONFIG
+    
+    assert not (do_tiny and do_large)
 
     if do_tiny:
         BOARD_CONFIG = make_board_config(do_tiny=True)
+        Hexagon.reset()
+        Hexagon.init()
+
+    if do_large:
+        CUBE_CONFIG = make_cube_config(do_large=True)
+        BOARD_CONFIG = make_board_config()
         Hexagon.reset()
         Hexagon.init()
 
@@ -782,6 +795,9 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
 
     if do_tiny:
         file_name = file_name.replace('pijersi_', 'tiny_pijersi_')
+
+    if do_large:
+        file_name = file_name.replace('pijersi_', 'large_pijersi_')
 
     if scale_factor != 1:
         file_name = f"scale-{scale_factor:.2f}-{file_name}"
@@ -1042,8 +1058,9 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
     board.save_png(os.path.join(_pictures_dir, f"{file_name}.png"))
     print("draw_board: save as PNG done")
 
-    if do_tiny:
-        #       >> reset to default
+    if do_tiny or do_large:
+        # >> reset to default
+        CUBE_CONFIG = make_cube_config()
         BOARD_CONFIG = make_board_config()
         Hexagon.reset()
         Hexagon.init()
@@ -1599,7 +1616,7 @@ def main():
                    with_texture=True)
 
 
-    if True:
+    if False:
         # -- Generate accurate PNG for pijersi-certu, so use a large scale_factor
         draw_isolated_cubes(scale_factor=18)
 
@@ -1607,6 +1624,11 @@ def main():
                    with_decoration=True, 
                    hexagon_line_color='#40210F',
                     with_hexagon_border=False)
+
+
+    if True:
+        draw_board(do_rendering=False, do_large=True, with_all_labels=False,
+                   with_decoration=True, with_gradient=False, with_opacity=False, with_texture=False)
 
     if False:
         draw_board(do_rendering=False, with_all_labels=False,
