@@ -811,7 +811,8 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
 
     # Define the board
     board = draw.Drawing(width=BOARD_CONFIG.board_width, height=BOARD_CONFIG.board_height,
-                         origin=(-BOARD_CONFIG.board_width/2, -BOARD_CONFIG.board_height/2))
+                         origin=(-BOARD_CONFIG.board_width/2, -BOARD_CONFIG.board_height/2), 
+                         fill='none')
     board.set_render_size(
         w=f"{scale_factor*BOARD_CONFIG.board_width_cm}cm",
         h=f"{scale_factor*BOARD_CONFIG.board_height_cm}cm")
@@ -829,7 +830,8 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
                                y=-BOARD_CONFIG.board_height/2 + BOARD_CONFIG.board_cut_margin,
                                width=BOARD_CONFIG.board_width - 2*BOARD_CONFIG.board_cut_margin,
                                height=BOARD_CONFIG.board_height - 2*BOARD_CONFIG.board_cut_margin,
-                               fill='white',
+                               #fill='white',
+                               fill='none',
                                stroke=COLOR_TO_CUT_1,
                                stroke_width=BOARD_CONFIG.line_width_max_to_cut)
 
