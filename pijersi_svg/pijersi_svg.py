@@ -424,10 +424,12 @@ def make_cube_config(do_large=False):
     return cube_config
 
 
-def make_board_config(do_tiny=False):
+def make_board_config(do_tiny=False, do_compact=False):
 
     print()
     print("make_board_config: ...")
+    
+    assert not (do_tiny and do_compact)
 
     # Compute the sizes in cm
 
@@ -436,6 +438,8 @@ def make_board_config(do_tiny=False):
     hexagon_height_cm = 2*hexagon_side_cm
     hexagon_padding_cm = 0.3
     hexagon_line_width_cm = 0.1/4
+
+    board_cut_margin_cm = 0.1/10
 
     if do_tiny:
         max_horizontal_hexagon_count = 3
@@ -450,11 +454,18 @@ def make_board_config(do_tiny=False):
     if do_tiny:
         board_top_margin_cm = hexagon_side_cm/2
         board_bottom_margin_cm = hexagon_side_cm/2
+    
+    elif do_compact:
+        board_top_margin_cm = 0
+        board_bottom_margin_cm = 0
+        board_left_margin_cm = 0
+        board_right_margin_cm = 0
+        
+        board_cut_margin_cm = 0
+
     else:
         board_top_margin_cm = hexagon_side_cm
         board_bottom_margin_cm = hexagon_side_cm
-
-    board_cut_margin_cm = 0.1/10
 
     board_width_cm = (board_cut_margin_cm +
                       board_left_margin_cm +
@@ -557,11 +568,12 @@ def make_board_config(do_tiny=False):
                                label_font_family=label_font_family,
                                label_font_size=label_font_size)
 
+    board_ratio = board_width_cm/board_height_cm;
+
     print()
     print(f"make_board_config: board_width_cm = {board_width_cm:.2f} ")
-    print(f"make_board_config: board_height_cm = {board_height_cm:.2f}")
-    print(
-        f"make_board_config: board_cut_margin_cm = {board_cut_margin_cm:.2f}")
+    print(f"make_board_config: board_width_cm = {board_height_cm:.2f}")
+    print(f"make_board_config: board_ratio = {board_ratio:.4f}")
     print()
     print(f"make_board_config: hexagon_width_cm = {hexagon_width_cm:.2f}")
     print(f"make_board_config: hexagon_height_cm = {hexagon_height_cm:.2f}")
@@ -741,7 +753,7 @@ class Hexagon:
 
 
 def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with_decoration=False,
-               do_rendering=True, with_gradient=True, with_opacity=True, do_tiny=False, do_large=False, with_texture=False,
+               do_rendering=True, with_gradient=True, with_opacity=True, do_tiny=False, do_compact=False, do_large=False, with_texture=False,
                with_concentrated_texture=False, with_concentric_hexas=False, hexagon_line_color=None, with_hexagon_border=True):
 
     print()
@@ -750,7 +762,7 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
     global BOARD_CONFIG
     global CUBE_CONFIG
     
-    assert not (do_tiny and do_large)
+    assert not (do_tiny and do_large and do_compact)
 
     if do_tiny:
         BOARD_CONFIG = make_board_config(do_tiny=True)
@@ -760,6 +772,11 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
     if do_large:
         CUBE_CONFIG = make_cube_config(do_large=True)
         BOARD_CONFIG = make_board_config()
+        Hexagon.reset()
+        Hexagon.init()
+
+    if do_compact:
+        BOARD_CONFIG = make_board_config(do_compact=True)
         Hexagon.reset()
         Hexagon.init()
 
@@ -798,6 +815,9 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
 
     if do_large:
         file_name = file_name.replace('pijersi_', 'large_pijersi_')
+
+    if do_compact:
+        file_name = file_name.replace('pijersi_', 'compact_pijersi_')
 
     if scale_factor != 1:
         file_name = f"scale-{scale_factor:.2f}-{file_name}"
@@ -1060,7 +1080,7 @@ def draw_board(scale_factor=1, with_all_labels=False, without_labels=False, with
     board.save_png(os.path.join(_pictures_dir, f"{file_name}.png"))
     print("draw_board: save as PNG done")
 
-    if do_tiny or do_large:
+    if do_tiny or do_large or do_compact:
         # >> reset to default
         CUBE_CONFIG = make_cube_config()
         BOARD_CONFIG = make_board_config()
@@ -1625,10 +1645,18 @@ def main():
         draw_board(scale_factor=5., without_labels=True,
                    with_decoration=True, 
                    hexagon_line_color='#40210F',
-                    with_hexagon_border=False)
-
+                   with_hexagon_border=False)
 
     if True:
+        # -- Generate for pijersi-js
+        draw_board(do_compact=True,
+                   without_labels=True,
+                   with_decoration=True, 
+                   hexagon_line_color='#40210F',
+                   with_hexagon_border=False)
+
+
+    if False:
         draw_board(do_rendering=False, do_large=True, with_all_labels=False,
                    with_decoration=True, with_gradient=False, with_opacity=False, with_texture=False)
 
